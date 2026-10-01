@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"text/template"
 )
 
 var db *sql.DB
@@ -28,6 +29,7 @@ func main() {
 	http.HandleFunc("/plan", plan)
 	http.HandleFunc("/lessons", lessons)
 	http.HandleFunc("/home", Home)
+	http.HandleFunc("/deleteTeacher", deleteTeacher)
 
 	fmt.Println(":8080")
 	http.ListenAndServe(":8080", noCache(http.DefaultServeMux))
@@ -52,7 +54,13 @@ func teacher(w http.ResponseWriter, r *http.Request) {
 		InsertIntoTeacher(name, subject, [][]string{saturday, sunday, monday, tuesday, wednesday, thursday})
 	}
 
-	http.ServeFile(w, r, "../html/teacher.html")
+	tmpl, err := template.ParseFiles("../html/teacher.html")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	teacher := getTeachersRow()
+	tmpl.Execute(w, teacher)
 }
 
 func class(w http.ResponseWriter, r *http.Request) {

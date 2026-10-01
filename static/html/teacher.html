@@ -238,41 +238,38 @@
 
         </section>
 
-        <section class="teachers-list">
 
-            <h2>👨‍🏫 معلمان ثبت‌شده</h2>
+        <!-- لیست معلمان -->
 
-            <div class="teacher">
+        <section class="teachers-list" id="teachers-list">
 
-                <div>
-                    <strong>علی احمدی</strong>
+            <h2>👨‍🏫 معلمان ثبت‌ شده</h2>
 
-                    <p>
-                        ریاضی
-                    </p>
-                </div>
-
-                <button>
-                    حذف
-                </button>
-
-            </div>
+            {{range .}}
 
             <div class="teacher">
 
                 <div>
-                    <strong>محمد رضایی</strong>
+
+                    <strong>
+                        {{.Name}}
+                    </strong>
 
                     <p>
-                        فیزیک
+                        {{.Subject}}
                     </p>
+
                 </div>
 
-                <button>
-                    حذف
-                </button>
-
+                    <form action="/deleteTeacher" method="POST">
+                        <input type="hidden" name="id" value="{{.ID}}">
+                        <button type="submit">حذف</button>
+                    </form>
             </div>
+
+            {{end}}
+
+
 
         </section>
 
