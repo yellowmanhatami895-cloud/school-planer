@@ -65,13 +65,11 @@ body {
 
 h1 {
     margin-bottom: 8px;
-
     font-size: 34px;
 }
 
 .description {
     color: #aaaaaa;
-
     margin-bottom: 35px;
 }
 
@@ -80,23 +78,17 @@ h1 {
 
 .cards {
     display: grid;
-
-    grid-template-columns:
-        repeat(3, 1fr);
-
+    grid-template-columns: repeat(3, 1fr);
     gap: 25px;
 }
 
-
 .card {
     padding: 28px;
-
     min-height: 230px;
 
     background: rgba(40, 45, 55, 0.85);
 
     border: 1px solid rgba(255, 255, 255, 0.08);
-
     border-radius: 14px;
 
     backdrop-filter: blur(8px);
@@ -106,33 +98,25 @@ h1 {
         background 0.2s;
 }
 
-
 .card:hover {
     transform: translateY(-5px);
 
     background: rgba(50, 55, 65, 0.95);
 }
 
-
 .card-icon {
     font-size: 38px;
-
     margin-bottom: 15px;
 }
 
-
 .card h2 {
     margin: 0 0 10px 0;
-
     font-size: 21px;
 }
 
-
 .card p {
     color: #bdbdbd;
-
     line-height: 1.6;
-
     min-height: 55px;
 }
 
@@ -147,7 +131,6 @@ button {
     border-radius: 7px;
 
     background: #3d6ea8;
-
     color: white;
 
     font-size: 14px;
@@ -156,7 +139,6 @@ button {
 
     transition: 0.2s;
 }
-
 
 button:hover {
     background: #5185c2;
@@ -168,7 +150,6 @@ button:hover {
 .generate-button {
     background: #4b8f62;
 }
-
 
 .generate-button:hover {
     background: #5eaa78;
@@ -182,6 +163,37 @@ button:hover {
 }
 
 
+/* Menu Buttons */
+
+.menu-button {
+    display: block;
+
+    width: 150px;
+
+    padding: 8px;
+
+    text-align: center;
+
+    color: inherit;
+
+    text-decoration: none !important;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.menu-button:hover {
+    color: inherit;
+
+    text-decoration: none !important;
+
+    background: rgba(61, 110, 168, 0.25);
+}
+
+
 /* Footer */
 
 footer {
@@ -192,38 +204,6 @@ footer {
     color: #888888;
 
     margin-top: 50px;
-}
-
-
-/* Responsive */
-
-@media (max-width: 900px) {
-
-    .cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-}
-
-
-@media (max-width: 600px) {
-
-    .navbar {
-        padding: 0 20px;
-    }
-
-    .logo {
-        font-size: 18px;
-    }
-
-    .container {
-        width: 92%;
-    }
-
-    .cards {
-        grid-template-columns: 1fr;
-    }
-
 }
 
 
@@ -244,13 +224,11 @@ footer {
     backdrop-filter: blur(8px);
 }
 
-
 .form-card h2,
 .teachers-list h2 {
     margin-top: 0;
     margin-bottom: 25px;
 }
-
 
 .form-group {
     display: flex;
@@ -262,11 +240,9 @@ footer {
     margin-bottom: 20px;
 }
 
-
 .form-group label {
     color: #cccccc;
 }
-
 
 .form-group input,
 .form-group select {
@@ -285,7 +261,6 @@ footer {
     font-size: 15px;
 }
 
-
 .form-card h3 {
     margin-top: 30px;
 }
@@ -296,14 +271,12 @@ footer {
 .days {
     display: grid;
 
-    grid-template-columns:
-        repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr);
 
     gap: 15px;
 
     margin-bottom: 25px;
 }
-
 
 .day {
     padding: 18px;
@@ -315,13 +288,10 @@ footer {
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-
 .day h4 {
     margin-top: 0;
-
     margin-bottom: 15px;
 }
-
 
 .day label {
     display: block;
@@ -330,7 +300,6 @@ footer {
 
     color: #cccccc;
 }
-
 
 .day input {
     margin-left: 7px;
@@ -343,7 +312,6 @@ footer {
     display: flex;
 
     align-items: center;
-
     justify-content: space-between;
 
     padding: 18px;
@@ -355,41 +323,18 @@ footer {
     border-radius: 10px;
 }
 
-
 .teacher p {
     margin: 6px 0 0;
 
     color: #aaaaaa;
 }
 
-
 .teacher button {
     background: #9b4444;
 }
 
-
 .teacher button:hover {
     background: #b95353;
-}
-
-
-/* Responsive */
-
-@media (max-width: 900px) {
-
-    .days {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-}
-
-
-@media (max-width: 600px) {
-
-    .days {
-        grid-template-columns: 1fr;
-    }
-
 }
 
 
@@ -407,24 +352,20 @@ footer {
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-
 .grade-title {
     display: flex;
 
     align-items: center;
-
     justify-content: space-between;
 
     margin-bottom: 18px;
 }
-
 
 .grade-title h3 {
     margin: 0;
 
     font-size: 20px;
 }
-
 
 .grade-title span {
     color: #aaaaaa;
@@ -438,18 +379,15 @@ footer {
 .class-grid {
     display: grid;
 
-    grid-template-columns:
-        repeat(4, 1fr);
+    grid-template-columns: repeat(4, 1fr);
 
     gap: 12px;
 }
-
 
 .class-item {
     display: flex;
 
     align-items: center;
-
     justify-content: space-between;
 
     padding: 14px;
@@ -461,11 +399,9 @@ footer {
     border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-
 .class-item span {
     font-weight: bold;
 }
-
 
 .class-item button {
     padding: 7px 12px;
@@ -475,49 +411,25 @@ footer {
     font-size: 12px;
 }
 
-
 .class-item button:hover {
     background: #b95353;
 }
 
-
-/* Responsive */
-
-@media (max-width: 900px) {
-
-    .class-grid {
-        grid-template-columns:
-            repeat(2, 1fr);
-    }
-
-}
-
-
-@media (max-width: 600px) {
-
-    .class-grid {
-        grid-template-columns: 1fr;
-    }
-
-}
 
 /* Subjects */
 
 .subject-list {
     display: grid;
 
-    grid-template-columns:
-        repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
 
     gap: 12px;
 }
-
 
 .subject-item {
     display: flex;
 
     align-items: center;
-
     justify-content: space-between;
 
     padding: 18px;
@@ -531,13 +443,11 @@ footer {
     transition: 0.2s;
 }
 
-
 .subject-item:hover {
     background: rgba(45, 50, 60, 0.9);
 
     transform: translateY(-2px);
 }
-
 
 .subject-info {
     display: flex;
@@ -547,11 +457,9 @@ footer {
     gap: 12px;
 }
 
-
 .subject-icon {
     font-size: 25px;
 }
-
 
 .subject-item button {
     background: #9b4444;
@@ -559,22 +467,9 @@ footer {
     padding: 8px 14px;
 }
 
-
 .subject-item button:hover {
     background: #b95353;
 }
-
-
-/* Responsive */
-
-@media (max-width: 600px) {
-
-    .subject-list {
-        grid-template-columns: 1fr;
-    }
-
-}
-
 
 .subject-info div p {
     margin: 5px 0 0;
@@ -601,13 +496,11 @@ footer {
     backdrop-filter: blur(8px);
 }
 
-
 .school-day h2 {
     margin-top: 0;
 
     margin-bottom: 18px;
 }
-
 
 .school-table {
     width: 100%;
@@ -619,7 +512,6 @@ footer {
     text-align: center;
 }
 
-
 .school-table th {
     padding: 16px;
 
@@ -627,7 +519,6 @@ footer {
 
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
-
 
 .school-table td {
     height: 75px;
@@ -641,18 +532,15 @@ footer {
     transition: 0.2s;
 }
 
-
 .school-table td:hover {
     background: rgba(60, 65, 75, 0.85);
 }
-
 
 .school-table td strong {
     display: block;
 
     margin-bottom: 5px;
 }
-
 
 .school-table td span {
     display: block;
@@ -662,7 +550,6 @@ footer {
     font-size: 12px;
 }
 
-
 .school-table .period {
     min-width: 110px;
 
@@ -671,17 +558,65 @@ footer {
     font-weight: bold;
 }
 
-
 .period span {
     margin-top: 5px;
 }
 
 
+/* Responsive */
+
 @media (max-width: 900px) {
+
+    .cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .days {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .class-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 
     .school-day {
         overflow-x: auto;
     }
+}
 
+
+@media (max-width: 600px) {
+
+    .navbar {
+        padding: 0 20px;
+    }
+
+    .logo {
+        font-size: 18px;
+    }
+
+    .container {
+        width: 92%;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+    .days {
+        grid-template-columns: 1fr;
+    }
+
+    .class-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .subject-list {
+        grid-template-columns: 1fr;
+    }
+
+    .menu-button {
+        width: 100%;
+    }
 }
 
