@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+
+
+    <title>مدیریت کلاس‌ها</title>
+
+    <link rel="stylesheet" href="../css/main.css">
+
+</head>
+
+<body>
+
+    <nav class="navbar">
+
+        <div class="logo">
+            🏫 برنامه‌ریزی مدرسه
+        </div>
+
+        <div class="user">
+            👤 مدیر
+        </div>
+
+    </nav>
+
+
+    <main class="container">
+
+        <h1>مدیریت کلاس‌ها</h1>
+
+        <p class="description">
+            پایه‌ها و تعداد کلاس‌های هر پایه را مشخص کنید.
+        </p>
+
+
+        <!-- اضافه کردن کلاس -->
+
+        <section class="form-card">
+
+            <h2>➕ اضافه کردن کلاس</h2>
+
+
+            <form>
+
+                <div class="form-group">
+
+                    <label for="grade">
+                        پایه
+                    </label>
+
+                    <select id="grade">
+
+                        <option value="">
+                            انتخاب پایه
+                        </option>
+
+                        <option value="10">
+                            دهم
+                        </option>
+
+                        <option value="11">
+                            یازدهم
+                        </option>
+
+                        <option value="12">
+                            دوازدهم
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="class-count">
+                        تعداد کلاس
+                    </label>
+
+                    <input
+                        type="number"
+                        id="class-count"
+                        min="1"
+                        placeholder="مثلاً ۴"
+                    >
+
+                </div>
+
+
+                <button type="submit">
+                    ثبت کلاس‌ها
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- کلاس‌های ثبت شده -->
+
+        <section class="teachers-list">
+
+            <h2>🏫 کلاس‌های ثبت‌شده</h2>
+
+
+            <!-- پایه دهم -->
+
+            <div class="grade-section">
+
+                <div class="grade-title">
+
+                    <h3>
+                        پایه دهم
+                    </h3>
+
+                    <span>
+                        ۴ کلاس
+                    </span>
+
+                </div>
+
+
+                <div class="class-grid">
+
+                    <div class="class-item">
+
+                        <span>
+                            دهم ۱
+                        </span>
+
+                        <button>
+                            حذف
+                        </button>
+
+                    </div>
+
+
+                    <div class="class-item">
+
+                        <span>
+                            دهم ۲
+                        </span>
+
+                        <button>
+                            حذف
+                        </button>
+
+                    </div>
+
+
+                    <div class="class-item">
+
+                        <span>
+                            دهم ۳
+                        </span>
+
+                        <button>
+                            حذف
+                        </button>
+
+                    </div>
+
+
+                    <div class="class-item">
+
+                        <span>
+                            دهم ۴
+                        </span>
+
+                        <button>
+                            حذف
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- پایه یازدهم -->
+
+            <div class="grade-section">
+
+                <div class="grade-title">
+
+                    <h3>
+                        پایه یازدهم
+                    </h3>
+
+                    <span>
+                        ۳ کلاس
+                    </span>
+
+                </div>
+
+
+                <div class="class-grid">
+
+                    <div class="class-item">
+
+                        <span>
+                            یازدهم ۱
+                        </span>
+
+                        <button>
+                            حذف
+                        </button>
+
+                    </div>
+
+
+                    <div class="class-item">
+
+                        <span>
+                            یازدهم ۲
+                        </span>
+
+                        <button>
+                            حذف
+                        </button>
+
+                    </div>
+
+
+                    <div class="class-item">
+
+                        <span>
+                            یازدهم ۳
+                        </span>
+
+                        <button>
+                            حذف
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- پایه دوازدهم -->
+
+            <div class="grade-section">
+
+                <div class="grade-title">
+
+                    <h3>
+                        پایه دوازدهم
+                    </h3>
+
+                    <span>
+                        ۲ کلاس
+                    </span>
+
+                </div>
+
+
+                <div class="class-grid">
+
+                    <div class="class-item">
+
+                        <span>
+                            دوازدهم ۱
+                        </span>
+
+                        <button>
+                            حذف
+                        </button>
+
+                    </div>
+
+
+                    <div class="class-item">
+
+                        <span>
+                            دوازدهم ۲
+                        </span>
+
+                        <button>
+                            حذف
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+        برنامه‌ریزی مدرسه © ۲۰۲۶
+        <p>محمد جواد حاتمی 101</p>
+
+    </footer>
+
+</body>
+
+</html>
+

@@ -1,0 +1,285 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+
+
+    <title>مدیریت درس‌ها</title>
+
+    <link rel="stylesheet" href="../css/main.css">
+
+</head>
+
+<body>
+
+    <nav class="navbar">
+
+        <div class="logo">
+            🏫 برنامه‌ریزی مدرسه
+        </div>
+
+        <div class="user">
+            👤 مدیر
+        </div>
+
+    </nav>
+
+
+    <main class="container">
+
+        <h1>مدیریت درس‌ها</h1>
+
+        <p class="description">
+            درس، پایه و تعداد زنگ‌های هفتگی هر درس را مشخص کنید.
+        </p>
+
+
+        <!-- اضافه کردن درس -->
+
+        <section class="form-card">
+
+            <h2>➕ اضافه کردن درس</h2>
+
+
+            <form>
+
+                <!-- نام درس -->
+
+                <div class="form-group">
+
+                    <label for="subject-name">
+                        نام درس
+                    </label>
+
+                    <input
+                        type="text"
+                        id="subject-name"
+                        placeholder="مثلاً ریاضی"
+                    >
+
+                </div>
+                
+                <div class="form-group">
+
+                    <label>
+                        نحوه قرارگیری زنگ‌ها
+                    </label>
+
+                    <select name="scheduleType">
+
+                    <option value="separate">
+                        زنگ‌ها می‌توانند جدا باشند
+                    </option>
+
+                    <option value="consecutive">
+                        زنگ‌ها ترجیحاً پشت‌سرهم باشند
+                    </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <!-- پایه -->
+
+                <div class="form-group">
+
+                    <label for="grade">
+                        پایه
+                    </label>
+
+                    <select id="grade">
+
+                        <option value="">
+                            انتخاب پایه
+                        </option>
+
+                        <option value="10">
+                            دهم
+                        </option>
+
+                        <option value="11">
+                            یازدهم
+                        </option>
+
+                        <option value="12">
+                            دوازدهم
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- تعداد زنگ -->
+
+                <div class="form-group">
+
+                    <label for="period-count">
+                        تعداد زنگ در هفته
+                    </label>
+
+                    <input
+                        type="number"
+                        id="period-count"
+                        min="1"
+                        max="20"
+                        placeholder="مثلاً ۴"
+                    >
+
+                </div>
+
+
+                <button type="submit">
+                    ثبت درس
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- لیست درس‌ها -->
+
+        <section class="teachers-list">
+
+            <h2>📚 درس‌های ثبت‌شده</h2>
+
+
+            <div class="subject-list">
+
+
+                <div class="subject-item">
+
+                    <div class="subject-info">
+
+                        <span class="subject-icon">
+                            📐
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                ریاضی
+                            </strong>
+
+                            <p>
+                                پایه دهم • ۴ زنگ در هفته
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <button>
+                        حذف
+                    </button>
+
+                </div>
+
+
+                <div class="subject-item">
+
+                    <div class="subject-info">
+
+                        <span class="subject-icon">
+                            ⚛️
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                فیزیک
+                            </strong>
+
+                            <p>
+                                پایه دهم • ۳ زنگ در هفته
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <button>
+                        حذف
+                    </button>
+
+                </div>
+
+
+                <div class="subject-item">
+
+                    <div class="subject-info">
+
+                        <span class="subject-icon">
+                            🧪
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                شیمی
+                            </strong>
+
+                            <p>
+                                پایه دهم • ۳ زنگ در هفته
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <button>
+                        حذف
+                    </button>
+
+                </div>
+
+
+                <div class="subject-item">
+
+                    <div class="subject-info">
+
+                        <span class="subject-icon">
+                            📖
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                ادبیات فارسی
+                            </strong>
+
+                            <p>
+                                پایه دهم • ۳ زنگ در هفته
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <button>
+                        حذف
+                    </button>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+        برنامه‌ریزی مدرسه © ۲۰۲۶
+       <p>محمد جواد حاتمی 101</p>
+    
+    </footer>
+
+</body>
+
+</html>
