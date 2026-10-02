@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strconv"
 	"text/template"
 )
 
@@ -12,7 +13,7 @@ var err error
 
 type ERR struct {
 	Error   []string
-	Teacher []Teacher
+	Teacher []TeacherRow
 }
 
 func getInputs(r *http.Request, names []string) []string {
@@ -90,13 +91,13 @@ func teacher(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if len(data.Error) == 0 {
-			InsertIntoTeacher(inputs[0], inputs[1], [][]string{multipleInputs[0], multipleInputs[1], multipleInputs[2], multipleInputs[3], multipleInputs[4], multipleInputs[5]})
+			InsertIntoTeacher(w, inputs[0], inputs[1], [][]string{multipleInputs[0], multipleInputs[1], multipleInputs[2], multipleInputs[3], multipleInputs[4], multipleInputs[5]})
 			http.Redirect(w, r, "/teachers", http.StatusSeeOther)
 			return
 		}
 	}
 
-	data.Teacher = getTeachersRow()
+	data.Teacher = getTeachersRow(w)
 
 	tmpl, err := template.ParseFiles("../html/teacher.html")
 	if err != nil {
@@ -110,9 +111,18 @@ func teacher(w http.ResponseWriter, r *http.Request) {
 
 func class(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		grade := r.FormValue("grade")
-		count := r.FormValue("count")
-		fmt.Println(grade, count)
+		inputs := getInputs(r, []string{"grade", "count"})
+		gradeInt, err := strconv.Atoi(inputs[0])
+		if err != nil {
+			fmt.Println(err)
+
+		}
+		countInt, err := strconv.Atoi(inputs[1])
+		if err != nil {
+			fmt.Println(err)
+
+		}
+		insertIntoClass(w, gradeInt, countInt)
 	}
 
 	http.ServeFile(w, r, "../html/class.html")
