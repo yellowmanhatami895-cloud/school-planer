@@ -11,7 +11,7 @@ import (
 var db *sql.DB
 var err error
 
-type ERR struct {
+type TeacherERR struct {
 	Error   []string
 	Teacher []TeacherRow
 }
@@ -61,7 +61,7 @@ func main() {
 	http.HandleFunc("/lessons", lessons)
 	http.HandleFunc("/home", Home)
 	http.HandleFunc("/deleteTeacher", deleteTeacher)
-
+	http.HandleFunc("/deleteClass", deleteClass)
 	fmt.Println(":8080")
 	http.ListenAndServe(":8080", noCache(http.DefaultServeMux))
 
@@ -72,7 +72,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func teacher(w http.ResponseWriter, r *http.Request) {
-	var data ERR
+	var data TeacherERR
 
 	if r.Method == http.MethodPost {
 		inputs := getInputs(r, []string{"name", "subject"})
@@ -110,23 +110,51 @@ func teacher(w http.ResponseWriter, r *http.Request) {
 }
 
 func class(w http.ResponseWriter, r *http.Request) {
+	var data errClass
+
 	if r.Method == http.MethodPost {
+
 		inputs := getInputs(r, []string{"grade", "count"})
+
 		gradeInt, err := strconv.Atoi(inputs[0])
 		if err != nil {
 			fmt.Println(err)
-
+			data.Error = append(data.Error, "یک پایه را انتخاب کنید")
 		}
+
 		countInt, err := strconv.Atoi(inputs[1])
 		if err != nil {
 			fmt.Println(err)
-
+			data.Error = append(data.Error, "تعداد را به صورت عدد وارد کنید")
 		}
-		insertIntoClass(w, gradeInt, countInt)
+
+		if len(data.Error) == 0 {
+			insertIntoClass(gradeInt, countInt)
+		}
 	}
 
-	http.ServeFile(w, r, "../html/class.html")
+	data.Class = getClassRow()
 
+	funcMap := template.FuncMap{
+		"firstGrade": func(classes []ClassRow, index int) bool {
+			if index == 0 {
+				return true
+			}
+
+			return classes[index-1].Grade != classes[index].Grade
+		},
+	}
+
+	tmpl, err := template.New("class.html").Funcs(funcMap).ParseFiles("../html/class.html")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func plan(w http.ResponseWriter, r *http.Request) {

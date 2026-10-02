@@ -15,7 +15,7 @@ func InsertIntoTeacher(w http.ResponseWriter, name string, subject string, week 
 	result, err := db.Exec("INSERT INTO teachers(name,subject) VALUES(?,?)", name, subject)
 	if err != nil {
 		fmt.Println(err)
-		sendErr(w, "خطا در وارد کردن اطلاعات", "../html/teacher")
+
 		return
 	}
 	teacherID, err := result.LastInsertId()
@@ -56,7 +56,8 @@ func InsertIntoTeacherTimes(w http.ResponseWriter, teacherID int, week [][]strin
 		_, err := db.Exec("INSERT INTO teacher_times(teacher_id, day, hours) VALUES(?, ?, ?)", teacherID, day, hour)
 		if err != nil {
 			fmt.Println(err)
-			sendErr(w, "خطا در وارد کردن اطلاعات", "../html/teacher")
+
+			return
 		}
 	}
 
@@ -65,7 +66,7 @@ func getTeachersRow(w http.ResponseWriter) []TeacherRow {
 	row, err := db.Query("SELECT id,name,subject FROM teachers")
 	if err != nil {
 		fmt.Println(err)
-		sendErr(w, "خطا در گرفتن کردن اطلاعات", "../html/teacher")
+
 		return []TeacherRow{}
 	}
 	defer row.Close()
@@ -77,7 +78,7 @@ func getTeachersRow(w http.ResponseWriter) []TeacherRow {
 		err := row.Scan(&id, &name, &subject)
 		if err != nil {
 			fmt.Println(err)
-			sendErr(w, "خطا در اسکن کردن اطلاعات", "../html/teacher")
+
 			return []TeacherRow{}
 		}
 		teachers = append(teachers, TeacherRow{
@@ -90,7 +91,6 @@ func getTeachersRow(w http.ResponseWriter) []TeacherRow {
 	if err != nil {
 		fmt.Println(err)
 
-		sendErr(w, "خطا در اسکنن کردن اطلاعات", "../html/teacher")
 		return []TeacherRow{}
 	}
 
@@ -103,14 +103,14 @@ func deleteTeacher(w http.ResponseWriter, r *http.Request) {
 	_, err := db.Exec("DELETE FROM teacher_times WHERE teacher_id = ?", id)
 	if err != nil {
 		fmt.Println(err)
-		sendErr(w, "خطا در پاک کردن اطلاعات", "../html/teacher")
+
 		return
 	}
 
 	_, err = db.Exec("DELETE FROM teachers WHERE id = ?", id)
 	if err != nil {
 		fmt.Println(err)
-		sendErr(w, "خطا در پاک کردن اطلاعات", "../html/teacher")
+
 		return
 	}
 

@@ -1,312 +1,191 @@
 <!DOCTYPE html>
+
 <html lang="fa" dir="rtl">
 
 <head>
 
+<title>مدیریت کلاس‌ها</title>
 
-    <title>مدیریت کلاس‌ها</title>
-
-    <link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/main.css">
 
 </head>
 
 <body>
 
-    <nav class="navbar">
+<nav class="navbar">
 
-        <div class="logo">
-            🏫 برنامه‌ریزی مدرسه
+
+<div class="logo">
+    🏫 برنامه‌ریزی مدرسه
+</div>
+
+<div class="user">
+    👤 مدیر
+</div>
+
+
+</nav>
+
+<main class="container">
+
+
+<div class="page-header">
+
+    <h1>مدیریت کلاس‌ها</h1>
+
+    <a href="/home" class="exit-button">↩ خروج</a>
+
+</div>
+
+<p class="description">
+    پایه‌ها و تعداد کلاس‌های هر پایه را مشخص کنید.
+</p>
+
+<section class="form-card">
+
+    <h2>➕ اضافه کردن کلاس</h2>
+
+    <form method="POST" action="/class">
+
+        <div class="form-group">
+
+            <label for="grade">
+                پایه
+            </label>
+
+            <select id="grade" name="grade">
+
+                <option value="">
+                    انتخاب پایه
+                </option>
+
+                <option value="10">
+                    دهم
+                </option>
+
+                <option value="11">
+                    یازدهم
+                </option>
+
+                <option value="12">
+                    دوازدهم
+                </option>
+
+            </select>
+
         </div>
 
-        <div class="user">
-            👤 مدیر
+        <div class="form-group">
+
+            <label for="class-count">
+                تعداد کلاس
+            </label>
+
+            <input
+                type="number"
+                id="class-count"
+                min="1"
+                placeholder="مثلاً ۴"
+                name="count"
+            >
+
         </div>
 
-    </nav>
+        {{range .Error}}
 
-
-    <main class="container">
-
-        
-                        
-        <div class="page-header">
-            <h1>مدیریت کلاس‌ها</h1>
-            <a href="/home" class="exit-button"> ↩ خروج </a>
-    
-        </div>
-        <p class="description">
-            پایه‌ها و تعداد کلاس‌های هر پایه را مشخص کنید.
+        <p class="error">
+            {{.}}
         </p>
 
+        {{end}}
 
-        <!-- اضافه کردن کلاس -->
+        <button type="submit">
+            ثبت کلاس‌ها
+        </button>
 
-        <section class="form-card">
+    </form>
 
-            <h2>➕ اضافه کردن کلاس</h2>
+</section>
 
+<section class="teachers-list" id="class-list">
 
-            <form method="POST" action="/class">
+    <h2>🏫 کلاس‌های ثبت‌شده</h2>
 
-                <div class="form-group">
+    {{range $index, $class := .Class}}
 
-                    <label for="grade">
-                        پایه
-                    </label>
+        {{if firstGrade $.Class $index}}
 
-                    <select id="grade" name ="grade">
+        <div class="grade-section">
 
-                        <option value="">
-                            انتخاب پایه
-                        </option>
+            <div class="grade-title">
 
-                        <option value="10" >
-                            دهم
-                        </option>
-
-                        <option value="11">
-                            یازدهم
-                        </option>
-
-                        <option value="12">
-                            دوازدهم
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="class-count">
-                        تعداد کلاس
-                    </label>
-
-                    <input
-                        type="number"
-                        id="class-count"
-                        min="1"
-                        placeholder="مثلاً ۴"
-                        name = "count"
-                    >
-
-                </div>
-
-
-                <button type="submit">
-                    ثبت کلاس‌ها
-                </button>
-
-            </form>
-
-        </section>
-
-
-        <!-- کلاس‌های ثبت شده -->
-
-        <section class="teachers-list">
-
-            <h2>🏫 کلاس‌های ثبت‌شده</h2>
-
-
-            <!-- پایه دهم -->
-
-            <div class="grade-section">
-
-                <div class="grade-title">
-
-                    <h3>
-                        پایه دهم
-                    </h3>
-
-                    <span>
-                        ۴ کلاس
-                    </span>
-
-                </div>
-
-
-                <div class="class-grid">
-
-                    <div class="class-item">
-
-                        <span>
-                            دهم ۱
-                        </span>
-
-                        <button>
-                            حذف
-                        </button>
-
-                    </div>
-
-
-                    <div class="class-item">
-
-                        <span>
-                            دهم ۲
-                        </span>
-
-                        <button>
-                            حذف
-                        </button>
-
-                    </div>
-
-
-                    <div class="class-item">
-
-                        <span>
-                            دهم ۳
-                        </span>
-
-                        <button>
-                            حذف
-                        </button>
-
-                    </div>
-
-
-                    <div class="class-item">
-
-                        <span>
-                            دهم ۴
-                        </span>
-
-                        <button>
-                            حذف
-                        </button>
-
-                    </div>
-
-                </div>
+                <h3>
+                    پایه {{$class.Grade}}
+                </h3>
 
             </div>
 
+            <div class="class-grid">
 
-            <!-- پایه یازدهم -->
+                {{range $.Class}}
 
-            <div class="grade-section">
-
-                <div class="grade-title">
-
-                    <h3>
-                        پایه یازدهم
-                    </h3>
-
-                    <span>
-                        ۳ کلاس
-                    </span>
-
-                </div>
-
-
-                <div class="class-grid">
+                    {{if eq .Grade $class.Grade}}
 
                     <div class="class-item">
 
                         <span>
-                            یازدهم ۱
+                            کلاس {{.Grade_id}}
                         </span>
 
-                        <button>
-                            حذف
-                        </button>
+                        <form method="POST" action="/deleteClass">
+
+                            <input
+                                type="hidden"
+                                name="id"
+                                value="{{.Grade_id}}"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="grade"
+                                value="{{.Grade}}"
+                            >
+
+                            <button type="submit">
+                                حذف
+                            </button>
+
+                        </form>
 
                     </div>
 
+                    {{end}}
 
-                    <div class="class-item">
-
-                        <span>
-                            یازدهم ۲
-                        </span>
-
-                        <button>
-                            حذف
-                        </button>
-
-                    </div>
-
-
-                    <div class="class-item">
-
-                        <span>
-                            یازدهم ۳
-                        </span>
-
-                        <button>
-                            حذف
-                        </button>
-
-                    </div>
-
-                </div>
+                {{end}}
 
             </div>
 
+        </div>
 
-            <!-- پایه دوازدهم -->
+        {{end}}
 
-            <div class="grade-section">
+    {{end}}
 
-                <div class="grade-title">
-
-                    <h3>
-                        پایه دوازدهم
-                    </h3>
-
-                    <span>
-                        ۲ کلاس
-                    </span>
-
-                </div>
+</section>
 
 
-                <div class="class-grid">
+</main>
 
-                    <div class="class-item">
-
-                        <span>
-                            دوازدهم ۱
-                        </span>
-
-                        <button>
-                            حذف
-                        </button>
-
-                    </div>
+<footer>
 
 
-                    <div class="class-item">
+برنامه‌ریزی مدرسه © ۲۰۲۶
 
-                        <span>
-                            دوازدهم ۲
-                        </span>
-
-                        <button>
-                            حذف
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-    </main>
+<p>محمد جواد حاتمی 101</p>
 
 
-    <footer>
-        برنامه‌ریزی مدرسه © ۲۰۲۶
-        <p>محمد جواد حاتمی 101</p>
-
-    </footer>
+</footer>
 
 </body>
 
 </html>
-

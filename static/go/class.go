@@ -4,84 +4,66 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"text/template"
 )
 
 type errClass struct {
-	Error string
-	Class ClassRow
+	Error []string
+	Class []ClassRow
 }
 type ClassRow struct {
 	Grade    string
 	Grade_id string
 }
 
-func insertIntoClass(w http.ResponseWriter, grade int, count int) {
+func insertIntoClass(grade int, count int) {
 	for i := 1; i <= count; i++ {
-		_, err := db.Exec("INSERT INTO class VALUE(?,?)", i, grade)
+		_, err := db.Exec("INSERT INTO classes VALUES(?,?)", i, grade)
 		if err != nil {
 			fmt.Println(err)
-			sendErr(w, "نمیتوان کلاس را وارد دیتا بیس کرد", "../html/class")
+
+			return
 		}
 	}
 }
-func getClassRow(w http.ResponseWriter) []ClassRow {
-	row, err := db.Query("SELECT * FROM classes")
+func getClassRow() []ClassRow {
+	rows, err := db.Query("SELECT grade, grade_id FROM classes ORDER BY grade, grade_id")
 	if err != nil {
 		fmt.Println(err)
-		sendErr(w, "نمی توان از دیتا بیس کلاس ها را دریافت کرد", "../html/class")
 		return []ClassRow{}
 	}
-	defer row.Close()
-	var gradeID, grade int
-	var gradeIDStr, gradeStr string
-	var class []ClassRow
-	for row.Next() {
-		err := row.Scan(&gradeID, &grade)
+	defer rows.Close()
+
+	var classes []ClassRow
+
+	for rows.Next() {
+
+		var grade int
+		var gradeID int
+
+		err := rows.Scan(&grade, &gradeID)
 		if err != nil {
 			fmt.Println(err)
-			sendErr(w, "مشکل دز اسکن اطلاعات داخل دیتا بیس", "../html/class")
-			return []ClassRow{}
+			continue
 		}
-		switch grade {
-		case 10:
-			gradeStr = "دهم"
-		case 11:
-			gradeStr = "یازدهم"
-		case 12:
-			gradeStr = "دوازدهم"
-		}
-		gradeIDStr = strconv.Itoa(gradeID)
-		if err != nil {
-			fmt.Println(err)
-			sendErr(w, "مشکل در اسکن اطاعات داخل دیتا بیس", "../html/class")
-		}
-		class = append(class, ClassRow{
-			Grade_id: gradeIDStr,
-			Grade:    gradeStr,
+
+		classes = append(classes, ClassRow{
+			Grade:    strconv.Itoa(grade),
+			Grade_id: strconv.Itoa(gradeID),
 		})
 	}
-	err = row.Err()
 
-	if err != nil {
-		fmt.Println(err)
-		sendErr(w, "مشکل در اسکن اطاعات داخل دیتا بیس", "../html/class")
-		return []ClassRow{}
-	}
-
-	return class
+	return classes
 }
-func sendErr(w http.ResponseWriter, errText string, file string) {
-	tmpl, err := template.ParseFiles(file)
+func deleteClass(w http.ResponseWriter, r *http.Request) {
 
+	grade := r.FormValue("grade")
+	gradeID := r.FormValue("id")
+	_, err := db.Exec("DELETE FROM classes WHERE grade = ? AND grade_id = ?", grade, gradeID)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	err = tmpl.Execute(w, errText)
-
-	if err != nil {
-		fmt.Println(err)
-	}
+	http.Redirect(w, r, "/class#class-list", http.StatusSeeOther)
+	fmt.Println(grade, gradeID, " deleted")
 }
