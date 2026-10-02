@@ -18,7 +18,7 @@ func createTables() {
 		fmt.Println(err)
 		return
 	}
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS classes (grade_id INTEGER,grade TEXT NOT NULL,PRIMARY KEY (grade, grade_id));")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS classes (grade_id INTEGER,grade INT NOT NULL,PRIMARY KEY (grade, grade_id));")
 
 	if err != nil {
 		fmt.Println(err)

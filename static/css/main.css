@@ -620,3 +620,26 @@ footer {
     }
 }
 
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.exit-button {
+    text-decoration: none;
+    background: #8b3a3a;
+    color: #f1dfb5;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.exit-button:hover {
+    background: #a94b4b;
+    transform: translateY(-2px);
+}
+
