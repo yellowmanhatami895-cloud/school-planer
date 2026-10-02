@@ -57,6 +57,7 @@ func InsertIntoTeacherTimes(teacherID int, week [][]string) {
 			fmt.Println(err)
 		}
 	}
+
 }
 func getTeachersRow() []Teacher {
 	row, err := db.Query("SELECT id,name,subject FROM teachers")

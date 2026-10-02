@@ -46,7 +46,7 @@
             <h2>➕ اضافه کردن کلاس</h2>
 
 
-            <form>
+            <form method="POST" action="/class">
 
                 <div class="form-group">
 
@@ -54,13 +54,13 @@
                         پایه
                     </label>
 
-                    <select id="grade">
+                    <select id="grade" name ="grade">
 
                         <option value="">
                             انتخاب پایه
                         </option>
 
-                        <option value="10">
+                        <option value="10" >
                             دهم
                         </option>
 
@@ -88,6 +88,7 @@
                         id="class-count"
                         min="1"
                         placeholder="مثلاً ۴"
+                        name = "count"
                     >
 
                 </div>

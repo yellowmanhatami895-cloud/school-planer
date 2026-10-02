@@ -10,6 +10,36 @@ import (
 var db *sql.DB
 var err error
 
+type ERR struct {
+	Error   []string
+	Teacher []Teacher
+}
+
+func getInputs(r *http.Request, names []string) []string {
+	var values []string
+	for _, name := range names {
+		value := r.FormValue(name)
+		values = append(values, value)
+	}
+	return values
+}
+func getMultipleInputs(r *http.Request, names []string) [][]string {
+	var values [][]string
+	for _, name := range names {
+		value := r.Form[name]
+		values = append(values, value)
+	}
+	return values
+}
+func hasNoInput(inputs [][]string) bool {
+	for _, input := range inputs {
+		if len(input) > 0 {
+			return false
+		}
+	}
+
+	return true
+}
 func main() {
 	db, err = sql.Open("sqlite", "../DB/DataBase.db")
 	if err != nil {
@@ -41,30 +71,52 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func teacher(w http.ResponseWriter, r *http.Request) {
+	var data ERR
 
 	if r.Method == http.MethodPost {
-		name := r.FormValue("name")
-		subject := r.FormValue("subject")
-		saturday := r.Form["saturday"]
-		sunday := r.Form["sunday"]
-		monday := r.Form["monday"]
-		tuesday := r.Form["tuesday"]
-		wednesday := r.Form["wednesday"]
-		thursday := r.Form["thursday"]
-		InsertIntoTeacher(name, subject, [][]string{saturday, sunday, monday, tuesday, wednesday, thursday})
+		inputs := getInputs(r, []string{"name", "subject"})
+		multipleInputs := getMultipleInputs(r, []string{"saturday", "sunday", "monday", "tuesday", "wednesday", "thursday"})
+
+		if inputs[0] == "" {
+			data.Error = append(data.Error, "نام معلم را وارد کنید")
+		}
+
+		if inputs[1] == "" {
+			data.Error = append(data.Error, "موضوع درس را وارد کنید")
+		}
+
+		if hasNoInput(multipleInputs) {
+			data.Error = append(data.Error, "حداقل یک ساعت را انتخواب کنید")
+		}
+
+		if len(data.Error) == 0 {
+			InsertIntoTeacher(inputs[0], inputs[1], [][]string{multipleInputs[0], multipleInputs[1], multipleInputs[2], multipleInputs[3], multipleInputs[4], multipleInputs[5]})
+			http.Redirect(w, r, "/teachers", http.StatusSeeOther)
+			return
+		}
 	}
+
+	data.Teacher = getTeachersRow()
 
 	tmpl, err := template.ParseFiles("../html/teacher.html")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	teacher := getTeachersRow()
-	tmpl.Execute(w, teacher)
+
+	tmpl.Execute(w, data)
+
 }
 
 func class(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		grade := r.FormValue("grade")
+		count := r.FormValue("count")
+		fmt.Println(grade, count)
+	}
+
 	http.ServeFile(w, r, "../html/class.html")
+
 }
 
 func plan(w http.ResponseWriter, r *http.Request) {

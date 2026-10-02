@@ -643,3 +643,7 @@ footer {
     transform: translateY(-2px);
 }
 
+
+.error {
+    color:  red;
+}

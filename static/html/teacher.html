@@ -4,6 +4,8 @@
 
 <head>
 
+    <meta charset="UTF-8">
+
     <title>مدیریت معلمان</title>
 
     <link rel="stylesheet" href="/css/main.css">
@@ -13,7 +15,7 @@
 <body>
 
     <nav class="navbar">
-        
+
         <div class="logo">
             🏫 برنامه‌ریزی مدرسه
         </div>
@@ -25,18 +27,23 @@
     </nav>
 
     <main class="container">
+
         <div class="page-header">
+
             <h1>مدیریت معلمان</h1>
 
-            <a href="/home" class="exit-button"> ↩ خروج </a>
-    
+            <a href="/home" class="exit-button">
+                ↩ خروج
+            </a>
+
         </div>
+
         <p class="description">
             اطلاعات معلمان و ساعات کاری آن‌ها را وارد کنید.
         </p>
 
         <section class="form-card">
-            
+
             <h2>➕ اضافه کردن معلم</h2>
 
             <form method="POST" action="/teachers">
@@ -50,8 +57,8 @@
                     <input
                         type="text"
                         id="teacher-name"
-                        placeholder="مثلاً علی احمدی"
                         name="name"
+                        placeholder="مثلاً علی احمدی"
                     >
 
                 </div>
@@ -65,8 +72,8 @@
                     <input
                         type="text"
                         id="subject"
-                        placeholder="مثلاً ریاضی"
                         name="subject"
+                        placeholder="مثلاً ریاضی"
                     >
 
                 </div>
@@ -233,6 +240,20 @@
 
                 </div>
 
+                {{if .Error}}
+
+                    <div class="error">
+
+                        {{range .Error}}
+
+                            <p>{{.}}</p>
+
+                        {{end}}
+
+                    </div>
+
+                {{end}}
+
                 <button type="submit">
                     ثبت معلم
                 </button>
@@ -241,38 +262,43 @@
 
         </section>
 
-
-        <!-- لیست معلمان -->
-
         <section class="teachers-list" id="teachers-list">
 
-            <h2>👨‍🏫 معلمان ثبت‌ شده</h2>
+            <h2>👨‍🏫 معلمان ثبت‌شده</h2>
 
-            {{range .}}
+            {{range .Teacher}}
 
-            <div class="teacher">
+                <div class="teacher">
 
-                <div>
+                    <div>
 
-                    <strong>
-                        {{.Name}}
-                    </strong>
+                        <strong>
+                            {{.Name}}
+                        </strong>
 
-                    <p>
-                        {{.Subject}}
-                    </p>
+                        <p>
+                            {{.Subject}}
+                        </p>
+
+                    </div>
+
+                    <form action="/deleteTeacher" method="POST">
+
+                        <input
+                            type="hidden"
+                            name="id"
+                            value="{{.ID}}"
+                        >
+
+                        <button type="submit">
+                            حذف
+                        </button>
+
+                    </form>
 
                 </div>
 
-                    <form action="/deleteTeacher" method="POST">
-                        <input type="hidden" name="id" value="{{.ID}}">
-                        <button type="submit">حذف</button>
-                    </form>
-            </div>
-
             {{end}}
-
-
 
         </section>
 
