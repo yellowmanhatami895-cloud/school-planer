@@ -1,0 +1,649 @@
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+}
+
+body {
+    font-family: Arial, sans-serif;
+
+    background:
+        linear-gradient(rgba(20, 25, 35, 0.85), rgba(20, 25, 35, 0.92)),
+        url("school.jpg");
+
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+
+    color: #eeeeee;
+}
+
+
+/* Navbar */
+
+.navbar {
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 40px;
+
+    background: rgba(25, 30, 40, 0.9);
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    backdrop-filter: blur(10px);
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.user {
+    font-size: 16px;
+    color: #cccccc;
+}
+
+
+/* Main */
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+
+    margin: 50px auto;
+}
+
+h1 {
+    margin-bottom: 8px;
+    font-size: 34px;
+}
+
+.description {
+    color: #aaaaaa;
+    margin-bottom: 35px;
+}
+
+
+/* Cards */
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.card {
+    padding: 28px;
+    min-height: 230px;
+
+    background: rgba(40, 45, 55, 0.85);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+
+    backdrop-filter: blur(8px);
+
+    transition:
+        transform 0.2s,
+        background 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+
+    background: rgba(50, 55, 65, 0.95);
+}
+
+.card-icon {
+    font-size: 38px;
+    margin-bottom: 15px;
+}
+
+.card h2 {
+    margin: 0 0 10px 0;
+    font-size: 21px;
+}
+
+.card p {
+    color: #bdbdbd;
+    line-height: 1.6;
+    min-height: 55px;
+}
+
+
+/* Buttons */
+
+button {
+    border: none;
+
+    padding: 11px 17px;
+
+    border-radius: 7px;
+
+    background: #3d6ea8;
+    color: white;
+
+    font-size: 14px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #5185c2;
+}
+
+
+/* Generate button */
+
+.generate-button {
+    background: #4b8f62;
+}
+
+.generate-button:hover {
+    background: #5eaa78;
+}
+
+
+/* Scheduler card */
+
+.scheduler-card {
+    border: 1px solid rgba(75, 143, 98, 0.35);
+}
+
+
+/* Menu Buttons */
+
+.menu-button {
+    display: block;
+
+    width: 150px;
+
+    padding: 8px;
+
+    text-align: center;
+
+    color: inherit;
+
+    text-decoration: none !important;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.menu-button:hover {
+    color: inherit;
+
+    text-decoration: none !important;
+
+    background: rgba(61, 110, 168, 0.25);
+}
+
+
+/* Footer */
+
+footer {
+    text-align: center;
+
+    padding: 25px;
+
+    color: #888888;
+
+    margin-top: 50px;
+}
+
+
+/* Teacher Form */
+
+.form-card,
+.teachers-list {
+    padding: 30px;
+
+    margin-bottom: 30px;
+
+    background: rgba(40, 45, 55, 0.85);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    border-radius: 14px;
+
+    backdrop-filter: blur(8px);
+}
+
+.form-card h2,
+.teachers-list h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+}
+
+.form-group {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    color: #cccccc;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+
+    padding: 12px;
+
+    border: 1px solid #555;
+
+    border-radius: 7px;
+
+    background: rgba(20, 25, 30, 0.8);
+
+    color: white;
+
+    font-size: 15px;
+}
+
+.form-card h3 {
+    margin-top: 30px;
+}
+
+
+/* Days */
+
+.days {
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+}
+
+.day {
+    padding: 18px;
+
+    background: rgba(25, 30, 40, 0.8);
+
+    border-radius: 10px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.day h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.day label {
+    display: block;
+
+    margin: 8px 0;
+
+    color: #cccccc;
+}
+
+.day input {
+    margin-left: 7px;
+}
+
+
+/* Teachers */
+
+.teacher {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 18px;
+
+    margin-top: 12px;
+
+    background: rgba(25, 30, 40, 0.8);
+
+    border-radius: 10px;
+}
+
+.teacher p {
+    margin: 6px 0 0;
+
+    color: #aaaaaa;
+}
+
+.teacher button {
+    background: #9b4444;
+}
+
+.teacher button:hover {
+    background: #b95353;
+}
+
+
+/* Classes */
+
+.grade-section {
+    margin-top: 25px;
+
+    padding: 20px;
+
+    background: rgba(25, 30, 40, 0.75);
+
+    border-radius: 10px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.grade-title {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 18px;
+}
+
+.grade-title h3 {
+    margin: 0;
+
+    font-size: 20px;
+}
+
+.grade-title span {
+    color: #aaaaaa;
+
+    font-size: 14px;
+}
+
+
+/* Class Grid */
+
+.class-grid {
+    display: grid;
+
+    grid-template-columns: repeat(4, 1fr);
+
+    gap: 12px;
+}
+
+.class-item {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 14px;
+
+    background: rgba(40, 45, 55, 0.9);
+
+    border-radius: 8px;
+
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.class-item span {
+    font-weight: bold;
+}
+
+.class-item button {
+    padding: 7px 12px;
+
+    background: #9b4444;
+
+    font-size: 12px;
+}
+
+.class-item button:hover {
+    background: #b95353;
+}
+
+
+/* Subjects */
+
+.subject-list {
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 12px;
+}
+
+.subject-item {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 18px;
+
+    background: rgba(25, 30, 40, 0.8);
+
+    border-radius: 10px;
+
+    border: 1px solid rgba(255, 255, 255, 0.07);
+
+    transition: 0.2s;
+}
+
+.subject-item:hover {
+    background: rgba(45, 50, 60, 0.9);
+
+    transform: translateY(-2px);
+}
+
+.subject-info {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+.subject-icon {
+    font-size: 25px;
+}
+
+.subject-item button {
+    background: #9b4444;
+
+    padding: 8px 14px;
+}
+
+.subject-item button:hover {
+    background: #b95353;
+}
+
+.subject-info div p {
+    margin: 5px 0 0;
+
+    color: #aaaaaa;
+
+    font-size: 13px;
+}
+
+
+/* School Schedule */
+
+.school-day {
+    margin-bottom: 30px;
+
+    padding: 20px;
+
+    background: rgba(40, 45, 55, 0.85);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    border-radius: 14px;
+
+    backdrop-filter: blur(8px);
+}
+
+.school-day h2 {
+    margin-top: 0;
+
+    margin-bottom: 18px;
+}
+
+.school-table {
+    width: 100%;
+
+    min-width: 900px;
+
+    border-collapse: collapse;
+
+    text-align: center;
+}
+
+.school-table th {
+    padding: 16px;
+
+    background: rgba(25, 30, 40, 0.95);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.school-table td {
+    height: 75px;
+
+    padding: 10px;
+
+    border: 1px solid rgba(255, 255, 255, 0.07);
+
+    background: rgba(45, 50, 60, 0.55);
+
+    transition: 0.2s;
+}
+
+.school-table td:hover {
+    background: rgba(60, 65, 75, 0.85);
+}
+
+.school-table td strong {
+    display: block;
+
+    margin-bottom: 5px;
+}
+
+.school-table td span {
+    display: block;
+
+    color: #aaaaaa;
+
+    font-size: 12px;
+}
+
+.school-table .period {
+    min-width: 110px;
+
+    background: rgba(25, 30, 40, 0.9);
+
+    font-weight: bold;
+}
+
+.period span {
+    margin-top: 5px;
+}
+
+
+/* Responsive */
+
+@media (max-width: 900px) {
+
+    .cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .days {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .class-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .school-day {
+        overflow-x: auto;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .navbar {
+        padding: 0 20px;
+    }
+
+    .logo {
+        font-size: 18px;
+    }
+
+    .container {
+        width: 92%;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+    .days {
+        grid-template-columns: 1fr;
+    }
+
+    .class-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .subject-list {
+        grid-template-columns: 1fr;
+    }
+
+    .menu-button {
+        width: 100%;
+    }
+}
+
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.exit-button {
+    text-decoration: none;
+    background: #8b3a3a;
+    color: #f1dfb5;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.exit-button:hover {
+    background: #a94b4b;
+    transform: translateY(-2px);
+}
+
+
+.error {
+    color:  red;
+}

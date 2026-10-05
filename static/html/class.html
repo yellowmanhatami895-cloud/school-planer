@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html lang="fa" dir="rtl">
+
+<head>
+
+<title>مدیریت کلاس‌ها</title>
+
+<link rel="stylesheet" href="/css/main.css">
+
+</head>
+
+<body>
+
+<nav class="navbar">
+
+
+<div class="logo">
+    🏫 برنامه‌ریزی مدرسه
+</div>
+
+<div class="user">
+    👤 مدیر
+</div>
+
+
+</nav>
+
+<main class="container">
+
+
+<div class="page-header">
+
+    <h1>مدیریت کلاس‌ها</h1>
+
+    <a href="/home" class="exit-button">↩ خروج</a>
+
+</div>
+
+<p class="description">
+    پایه‌ها و تعداد کلاس‌های هر پایه را مشخص کنید.
+</p>
+
+<section class="form-card">
+
+    <h2>➕ اضافه کردن کلاس</h2>
+
+    <form method="POST" action="/class">
+
+        <div class="form-group">
+
+            <label for="grade">
+                پایه
+            </label>
+
+            <select id="grade" name="grade">
+
+                <option value="">
+                    انتخاب پایه
+                </option>
+
+                <option value="10">
+                    دهم
+                </option>
+
+                <option value="11">
+                    یازدهم
+                </option>
+
+                <option value="12">
+                    دوازدهم
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="class-count">
+                تعداد کلاس
+            </label>
+
+            <input
+                type="number"
+                id="class-count"
+                min="1"
+                placeholder="مثلاً ۴"
+                name="count"
+            >
+
+        </div>
+
+        {{range .Error}}
+
+        <p class="error">
+            {{.}}
+        </p>
+
+        {{end}}
+
+        <button type="submit">
+            ثبت کلاس‌ها
+        </button>
+
+    </form>
+
+</section>
+
+<section class="teachers-list" id="class-list">
+
+    <h2>🏫 کلاس‌های ثبت‌شده</h2>
+
+    {{range $index, $class := .Class}}
+
+        {{if firstGrade $.Class $index}}
+
+        <div class="grade-section">
+
+            <div class="grade-title">
+
+                <h3>
+                    پایه {{$class.Grade}}
+                </h3>
+
+            </div>
+
+            <div class="class-grid">
+
+                {{range $.Class}}
+
+                    {{if eq .Grade $class.Grade}}
+
+                    <div class="class-item">
+
+                        <span>
+                            کلاس {{.Grade_id}}
+                        </span>
+
+                        <form method="POST" action="/deleteClass">
+
+                            <input
+                                type="hidden"
+                                name="id"
+                                value="{{.Grade_id}}"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="grade"
+                                value="{{.Grade}}"
+                            >
+
+                            <button type="submit">
+                                حذف
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                    {{end}}
+
+                {{end}}
+
+            </div>
+
+        </div>
+
+        {{end}}
+
+    {{end}}
+
+</section>
+
+
+</main>
+
+<footer>
+
+
+برنامه‌ریزی مدرسه © ۲۰۲۶
+
+<p>محمد جواد حاتمی 101</p>
+
+
+</footer>
+
+</body>
+
+</html>
