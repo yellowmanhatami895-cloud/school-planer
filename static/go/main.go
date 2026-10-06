@@ -16,6 +16,11 @@ type TeacherERR struct {
 	Teacher []TeacherRow
 }
 
+type TeacherTimes struct {
+	Day  string
+	Hour string
+}
+
 func getInputs(r *http.Request, names []string) []string {
 	var values []string
 	for _, name := range names {
@@ -196,46 +201,5 @@ func lessons(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func makePlan() {
-	subjectRows, err := db.Query("SELECT subject FROM teachers")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer subjectRows.Close()
-	var subject string
-	var class_grade string
-	var times int
-	var ic bool
-	for subjectRows.Next() {
-		subjectRows.Scan(&subject)
-		lessonsRow, err := db.Query("SELECT class_grade,times,is_continuous FROM lessons WHERE name = ?", subject)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		defer lessonsRow.Close()
-		for lessonsRow.Next() {
-			lessonsRow.Scan(&class_grade, &times, &ic)
-			classRow, err := db.Query("SELECT grade_id FROM classes WHERE grade = ?", class_grade)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			defer classRow.Close()
-
-			//
-		}
-		err = lessonsRow.Err()
-		if err != nil {
-			fmt.Println(err)
-			return
-
-		}
-
-	}
-	err = subjectRows.Err()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	// teacherRows := collectTeacherInformation()
 }

@@ -6,9 +6,10 @@ import (
 )
 
 type TeacherRow struct {
-	ID      int
-	Name    string
-	Subject string
+	ID           int
+	Name         string
+	Subject      string
+	teacherTimes []TeacherTimes
 }
 
 func InsertIntoTeacher(w http.ResponseWriter, name string, subject string, week [][]string) {
@@ -116,4 +117,54 @@ func deleteTeacher(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/teachers#teachers-list", http.StatusSeeOther)
 	fmt.Println(id, " deleted")
+}
+func collectTeacherInformation() []TeacherRow {
+	var teacherRows []TeacherRow
+
+	teacherRow, err := db.Query("SELECT id,name,subject FROM teachers")
+	if err != nil {
+		fmt.Println(err)
+		return []TeacherRow{}
+	}
+
+	for teacherRow.Next() {
+		var teacherTimes []TeacherTimes
+		var teacherID int
+		var teacherName string
+		var teacherSubject string
+		var teacherDay string
+		var teacherHours string
+		teacherRow.Scan(&teacherID, &teacherName, &teacherSubject)
+
+		teacherTimesRow, err := db.Query("SELECT day,hours FROM teacher_times WHERE teacher_id = ? ", teacherID)
+		if err != nil {
+			fmt.Println(err)
+			return []TeacherRow{}
+		}
+		for teacherTimesRow.Next() {
+			teacherTimesRow.Scan(&teacherDay, &teacherHours)
+			teacherTimes = append(teacherTimes, TeacherTimes{
+				Day:  teacherDay,
+				Hour: teacherHours,
+			})
+		}
+		err = teacherTimesRow.Err()
+		if err != nil {
+			fmt.Println(err)
+			return []TeacherRow{}
+		}
+
+		teacherRows = append(teacherRows, TeacherRow{
+			Name:         teacherName,
+			Subject:      teacherSubject,
+			ID:           teacherID,
+			teacherTimes: teacherTimes,
+		})
+	}
+	err = teacherRow.Err()
+	if err != nil {
+		fmt.Println(err)
+		return []TeacherRow{}
+	}
+	return teacherRows
 }
