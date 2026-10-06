@@ -69,3 +69,32 @@ func deleteLessons(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/lessons", http.StatusSeeOther)
 }
+
+func collectLessonsInformation() []LessonsRow {
+	var lessonsRows []LessonsRow
+
+	lessonsRow, err := db.Query("SELECT name,class_grade,times,is_continuous FROM lessons")
+
+	if err != nil {
+		fmt.Println(err)
+		return []LessonsRow{}
+	}
+
+	for lessonsRow.Next() {
+		var name, classGrade, times string
+		var ScheduleType bool
+		lessonsRow.Scan(&name, &classGrade, &times, &ScheduleType)
+		lessonsRows = append(lessonsRows, LessonsRow{
+			Name:         name,
+			Grade:        classGrade,
+			Count:        times,
+			ScheduleType: ScheduleType,
+		})
+	}
+
+	err = lessonsRow.Err()
+	if err != nil {
+		fmt.Println(err)
+	}
+	return lessonsRows
+}
