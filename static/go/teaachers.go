@@ -126,7 +126,7 @@ func collectTeacherInformation() []TeacherRow {
 		fmt.Println(err)
 		return []TeacherRow{}
 	}
-
+	defer teacherRow.Close()
 	for teacherRow.Next() {
 		var teacherTimes []TeacherTimes
 		var teacherID int

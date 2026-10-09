@@ -11,8 +11,8 @@ type errLessons struct {
 }
 type LessonsRow struct {
 	Name         string
-	Grade        string
-	Count        string
+	Grade        int
+	Count        int
 	ScheduleType bool
 }
 
@@ -40,7 +40,8 @@ func getLessonsRow() []LessonsRow {
 	}
 	defer row.Close()
 	var lessons []LessonsRow
-	var name, grade, count string
+	var name string
+	var grade, count int
 	var isContinuous bool
 	for row.Next() {
 		err := row.Scan(&name, &grade, &count, &isContinuous)
@@ -81,7 +82,8 @@ func collectLessonsInformation() []LessonsRow {
 	}
 
 	for lessonsRow.Next() {
-		var name, classGrade, times string
+		var name string
+		var classGrade, times int
 		var ScheduleType bool
 		lessonsRow.Scan(&name, &classGrade, &times, &ScheduleType)
 		lessonsRows = append(lessonsRows, LessonsRow{

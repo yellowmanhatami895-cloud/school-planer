@@ -30,7 +30,7 @@ func createTables() {
 		fmt.Println(err)
 		return
 	}
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS week (id INTEGER PRIMARY KEY,grade INTEGER,class_id INTEGER,day TEXT NOT NULL,hour INTEGER,lesson_name TEXT,lesson_grade TEXT,teacher_id INTEGER,FOREIGN KEY (grade, class_id) REFERENCES classes(grade, grade_id),FOREIGN KEY (lesson_name, lesson_grade) REFERENCES lessons(name, class_grade),FOREIGN KEY (teacher_id) REFERENCES teachers(id));")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS week (id INTEGER PRIMARY KEY,grade INTEGER,class_id INTEGER,day TEXT NOT NULL,hour TEXT,lesson_name TEXT,lesson_grade TEXT,teacher_id INTEGER,FOREIGN KEY (grade, class_id) REFERENCES classes(grade, grade_id),FOREIGN KEY (lesson_name, lesson_grade) REFERENCES lessons(name, class_grade),FOREIGN KEY (teacher_id) REFERENCES teachers(id));")
 
 	if err != nil {
 		fmt.Println(err)

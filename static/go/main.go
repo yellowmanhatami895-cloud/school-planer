@@ -200,6 +200,47 @@ func lessons(w http.ResponseWriter, r *http.Request) {
 
 	}
 }
+
+type PlanRow struct {
+	Grade      int
+	ClassID    int
+	Day        int
+	Hour       int
+	LessonName string
+	TeacherID  int
+}
+
 func makePlan() {
-	// teacherRows := collectTeacherInformation()
+	var plans []PlanRow
+	teacherRows := collectTeacherInformation()
+	lessonsRows := collectLessonsInformation()
+	classRows := collectClassInformation()
+	for _, class := range classRows {
+		for d := 0; d < 6; d++ {
+			for h := 1; h <= 4; h++ {
+				plans = append(plans, PlanRow{
+					Grade:   class.Grade,
+					ClassID: class.Grade_id,
+					Day:     d,
+					Hour:    h,
+				})
+			}
+		}
+		for _, lessons := range lessonsRows {
+			if class.Grade == lessons.Grade {
+				fmt.Println(class.Grade)
+				for _, teacher := range teacherRows {
+					if lessons.Name == teacher.Subject {
+						fmt.Println(lessons.Name)
+						for _, plan := range plans {
+							fmt.Println(plan)
+						}
+
+					}
+				}
+
+			}
+		}
+
+	}
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 )
 
 type errClass struct {
@@ -11,8 +10,8 @@ type errClass struct {
 	Class []ClassRow
 }
 type ClassRow struct {
-	Grade    string
-	Grade_id string
+	Grade    int
+	Grade_id int
 }
 
 func insertIntoClass(grade int, count int) {
@@ -47,8 +46,8 @@ func getClassRow() []ClassRow {
 		}
 
 		classes = append(classes, ClassRow{
-			Grade:    strconv.Itoa(grade),
-			Grade_id: strconv.Itoa(gradeID),
+			Grade:    grade,
+			Grade_id: gradeID,
 		})
 	}
 
@@ -66,4 +65,30 @@ func deleteClass(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/class#class-list", http.StatusSeeOther)
 	fmt.Println(grade, gradeID, " deleted")
+}
+func collectClassInformation() []ClassRow {
+	var classRows []ClassRow
+
+	classRow, err := db.Query("SELECT grade,grade_id FROM classes")
+	if err != nil {
+		fmt.Println(err)
+		return []ClassRow{}
+	}
+	defer classRow.Close()
+
+	for classRow.Next() {
+		var grade, gradeID int
+		classRow.Scan(&grade, &gradeID)
+		classRows = append(classRows, ClassRow{
+			Grade:    grade,
+			Grade_id: gradeID,
+		})
+	}
+	err = classRow.Err()
+
+	if err != nil {
+		fmt.Println(err)
+		return []ClassRow{}
+	}
+	return classRows
 }
