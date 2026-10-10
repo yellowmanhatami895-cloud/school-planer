@@ -12,7 +12,7 @@ func createTables() {
 		fmt.Println(err)
 		return
 	}
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS teacher_times (id INTEGER PRIMARY KEY,teacher_id INTEGER,day TEXT NOT NULL,hours TEXT NOT NULL,FOREIGN KEY (teacher_id) REFERENCES teachers(id));")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS teacher_times (id INTEGER PRIMARY KEY,teacher_id INTEGER,day INTEGER NOT NULL,hours INTEGER NOT NULL,FOREIGN KEY (teacher_id) REFERENCES teachers(id));")
 
 	if err != nil {
 		fmt.Println(err)

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 type TeacherRow struct {
@@ -33,28 +34,32 @@ func InsertIntoTeacherTimes(w http.ResponseWriter, teacherID int, week [][]strin
 
 	for i, hours := range week {
 
-		var day string
+		var day int
 
 		switch i {
 		case 0:
-			day = "saturday"
+			day = 0
 		case 1:
-			day = "sunday"
+			day = 1
 		case 2:
-			day = "monday"
+			day = 2
 		case 3:
-			day = "tuesday"
+			day = 3
 		case 4:
-			day = "wednesday"
+			day = 4
 		case 5:
-			day = "thursday"
+			day = 5
 		}
 
 		var hour string
 		for _, h := range hours {
 			hour = hour + h
 		}
-		_, err := db.Exec("INSERT INTO teacher_times(teacher_id, day, hours) VALUES(?, ?, ?)", teacherID, day, hour)
+		hourInt, err := strconv.Atoi(hour)
+		if err != nil {
+			fmt.Println(err)
+		}
+		_, err = db.Exec("INSERT INTO teacher_times(teacher_id, day, hours) VALUES(?, ?, ?)", teacherID, day, hourInt)
 		if err != nil {
 			fmt.Println(err)
 
@@ -132,8 +137,8 @@ func collectTeacherInformation() []TeacherRow {
 		var teacherID int
 		var teacherName string
 		var teacherSubject string
-		var teacherDay string
-		var teacherHours string
+		var teacherDay int
+		var teacherHours int
 		teacherRow.Scan(&teacherID, &teacherName, &teacherSubject)
 
 		teacherTimesRow, err := db.Query("SELECT day,hours FROM teacher_times WHERE teacher_id = ? ", teacherID)

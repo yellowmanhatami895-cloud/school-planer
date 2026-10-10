@@ -17,8 +17,8 @@ type TeacherERR struct {
 }
 
 type TeacherTimes struct {
-	Day  string
-	Hour string
+	Day  int
+	Hour int
 }
 
 func getInputs(r *http.Request, names []string) []string {
@@ -69,6 +69,7 @@ func main() {
 	http.HandleFunc("/deleteClass", deleteClass)
 	http.HandleFunc("/deleteLessons", deleteLessons)
 	fmt.Println(":8080")
+	makePlan()
 	http.ListenAndServe(":8080", nil)
 
 }
@@ -82,7 +83,7 @@ func teacher(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		inputs := getInputs(r, []string{"name", "subject"})
-		multipleInputs := getMultipleInputs(r, []string{"saturday", "sunday", "monday", "tuesday", "wednesday", "thursday"})
+		multipleInputs := getMultipleInputs(r, []string{"0", "1", "2", "3", "4", "5"})
 
 		if inputs[0] == "" {
 			data.Error = append(data.Error, "نام معلم را وارد کنید")
@@ -197,50 +198,6 @@ func lessons(w http.ResponseWriter, r *http.Request) {
 	err = tmpl.Execute(w, data)
 	if err != nil {
 		fmt.Println(err)
-
-	}
-}
-
-type PlanRow struct {
-	Grade      int
-	ClassID    int
-	Day        int
-	Hour       int
-	LessonName string
-	TeacherID  int
-}
-
-func makePlan() {
-	var plans []PlanRow
-	teacherRows := collectTeacherInformation()
-	lessonsRows := collectLessonsInformation()
-	classRows := collectClassInformation()
-	for _, class := range classRows {
-		for d := 0; d < 6; d++ {
-			for h := 1; h <= 4; h++ {
-				plans = append(plans, PlanRow{
-					Grade:   class.Grade,
-					ClassID: class.Grade_id,
-					Day:     d,
-					Hour:    h,
-				})
-			}
-		}
-		for _, lessons := range lessonsRows {
-			if class.Grade == lessons.Grade {
-				fmt.Println(class.Grade)
-				for _, teacher := range teacherRows {
-					if lessons.Name == teacher.Subject {
-						fmt.Println(lessons.Name)
-						for _, plan := range plans {
-							fmt.Println(plan)
-						}
-
-					}
-				}
-
-			}
-		}
 
 	}
 }
