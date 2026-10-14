@@ -69,7 +69,7 @@ func main() {
 	http.HandleFunc("/deleteClass", deleteClass)
 	http.HandleFunc("/deleteLessons", deleteLessons)
 	fmt.Println(":8080")
-	makePlan()
+
 	http.ListenAndServe(":8080", nil)
 
 }
@@ -164,9 +164,128 @@ func class(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type PlanCell struct {
+	LessonName  string
+	TeacherName string
+}
+
+type PlanPeriod struct {
+	Hour  int
+	Cells []PlanCell
+}
+
+type PlanDay struct {
+	Name    string
+	Periods []PlanPeriod
+}
+
+type PlanPageData struct {
+	Days    []PlanDay
+	Classes []ClassRow
+}
+
 func plan(w http.ResponseWriter, r *http.Request) {
 	makePlan()
-	http.ServeFile(w, r, "../html/plan.html")
+
+	plans, err := collectPlan()
+	if err != nil {
+		http.Error(w, "خطا در دریافت برنامه هفتگی", http.StatusInternalServerError)
+		fmt.Println(err)
+		return
+	}
+
+	classes := getClassRow()
+	teacherNames := make(map[int]string)
+
+	rows, err := db.Query("SELECT id, name FROM teachers")
+	if err != nil {
+		http.Error(w, "خطا در دریافت نام معلم‌ها", http.StatusInternalServerError)
+		fmt.Println(err)
+		return
+	}
+
+	for rows.Next() {
+		var id int
+		var name string
+
+		if err := rows.Scan(&id, &name); err != nil {
+			rows.Close()
+			http.Error(w, "خطا در خواندن اطلاعات معلم‌ها", http.StatusInternalServerError)
+			fmt.Println(err)
+			return
+		}
+
+		teacherNames[id] = name
+	}
+
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		http.Error(w, "خطا در خواندن اطلاعات معلم‌ها", http.StatusInternalServerError)
+		fmt.Println(err)
+		return
+	}
+
+	rows.Close()
+
+	planMap := make(map[string]PlanCell)
+
+	for _, p := range plans {
+		key := fmt.Sprintf("%d-%d-%d-%d", p.Grade, p.ClassID, p.Day, p.Hour)
+
+		planMap[key] = PlanCell{
+			LessonName:  p.LessonName,
+			TeacherName: teacherNames[p.TeacherID],
+		}
+	}
+
+	dayNames := []string{
+		"شنبه",
+		"یکشنبه",
+		"دوشنبه",
+		"سه‌شنبه",
+		"چهارشنبه",
+		"پنجشنبه",
+	}
+
+	data := PlanPageData{
+		Classes: classes,
+	}
+
+	for dayIndex, dayName := range dayNames {
+		day := PlanDay{
+			Name: dayName,
+		}
+
+		for hour := 1; hour <= 4; hour++ {
+			period := PlanPeriod{
+				Hour: hour,
+			}
+
+			for _, class := range classes {
+				grade := class.Grade
+				classID := class.Grade_id
+
+				key := fmt.Sprintf("%d-%d-%d-%d", grade, classID, dayIndex, hour)
+
+				period.Cells = append(period.Cells, planMap[key])
+			}
+
+			day.Periods = append(day.Periods, period)
+		}
+
+		data.Days = append(data.Days, day)
+	}
+
+	tmpl, err := template.ParseFiles("../html/plan.html")
+	if err != nil {
+		http.Error(w, "خطا در بارگذاری صفحه برنامه هفتگی", http.StatusInternalServerError)
+		fmt.Println(err)
+		return
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		fmt.Println(err)
+	}
 }
 func lessons(w http.ResponseWriter, r *http.Request) {
 	var data errLessons
@@ -200,4 +319,41 @@ func lessons(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 
 	}
+}
+func collectPlan() ([]PlanRow, error) {
+	var plans []PlanRow
+
+	rows, err := db.Query(`
+		SELECT grade, class_id, day, hour, lesson_name, teacher_id
+		FROM week
+		ORDER BY day, hour, grade, class_id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p PlanRow
+
+		err := rows.Scan(
+			&p.Grade,
+			&p.ClassID,
+			&p.Day,
+			&p.Hour,
+			&p.LessonName,
+			&p.TeacherID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		plans = append(plans, p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return plans, nil
 }
