@@ -3,39 +3,29 @@
 <html lang="fa" dir="rtl">
 
 <head>
-
     <meta charset="UTF-8">
-
     <title>مدیریت معلمان</title>
-
     <link rel="stylesheet" href="/css/main.css">
-
 </head>
 
 <body>
 
     <nav class="navbar">
-
         <div class="logo">
             🏫 برنامه‌ریزی مدرسه
         </div>
-
         <div class="user">
             👤 مدیر
         </div>
-
     </nav>
 
     <main class="container">
 
         <div class="page-header">
-
             <h1>مدیریت معلمان</h1>
-
             <a href="/home" class="exit-button">
                 ↩ خروج
             </a>
-
         </div>
 
         <p class="description">
@@ -49,33 +39,27 @@
             <form method="POST" action="/teachers">
 
                 <div class="form-group">
-
                     <label for="teacher-name">
                         نام و نام خانوادگی
                     </label>
-
                     <input
                         type="text"
                         id="teacher-name"
                         name="name"
                         placeholder="مثلاً علی احمدی"
                     >
-
                 </div>
 
                 <div class="form-group">
-
                     <label for="subject">
                         درس
                     </label>
-
                     <input
                         type="text"
                         id="subject"
                         name="subject"
                         placeholder="مثلاً ریاضی"
                     >
-
                 </div>
 
                 <h3>⏰ ساعات کاری</h3>
@@ -83,175 +67,53 @@
                 <div class="days">
 
                     <div class="day">
-
                         <h4>شنبه</h4>
-
-                        <label>
-                            <input type="checkbox" name="0" value="1">
-                            زنگ ۱
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="0" value="2">
-                            زنگ ۲
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="0" value="3">
-                            زنگ ۳
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="0" value="4">
-                            زنگ ۴
-                        </label>
-
+                        <label><input type="checkbox" name="0" value="1"> زنگ ۱</label>
+                        <label><input type="checkbox" name="0" value="2"> زنگ ۲</label>
+                        <label><input type="checkbox" name="0" value="3"> زنگ ۳</label>
+                        <label><input type="checkbox" name="0" value="4"> زنگ ۴</label>
                     </div>
 
                     <div class="day">
-
                         <h4>یکشنبه</h4>
-
-                        <label>
-                            <input type="checkbox" name="1" value="1">
-                            زنگ ۱
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="1" value="2">
-                            زنگ ۲
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="1" value="3">
-                            زنگ ۳
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="1" value="4">
-                            زنگ ۴
-                        </label>
-
+                        <label><input type="checkbox" name="1" value="1"> زنگ ۱</label>
+                        <label><input type="checkbox" name="1" value="2"> زنگ ۲</label>
+                        <label><input type="checkbox" name="1" value="3"> زنگ ۳</label>
+                        <label><input type="checkbox" name="1" value="4"> زنگ ۴</label>
                     </div>
 
                     <div class="day">
-
                         <h4>دوشنبه</h4>
-
-                        <label>
-                            <input type="checkbox" name="2" value="1">
-                            زنگ ۱
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="2" value="2">
-                            زنگ ۲
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="2" value="3">
-                            زنگ ۳
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="2" value="4">
-                            زنگ ۴
-                        </label>
-
+                        <label><input type="checkbox" name="2" value="1"> زنگ ۱</label>
+                        <label><input type="checkbox" name="2" value="2"> زنگ ۲</label>
+                        <label><input type="checkbox" name="2" value="3"> زنگ ۳</label>
+                        <label><input type="checkbox" name="2" value="4"> زنگ ۴</label>
                     </div>
 
                     <div class="day">
-
                         <h4>سه‌شنبه</h4>
-
-                        <label>
-                            <input type="checkbox" name="3" value="1">
-                            زنگ ۱
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="3" value="2">
-                            زنگ ۲
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="3" value="3">
-                            زنگ ۳
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="3" value="4">
-                            زنگ ۴
-                        </label>
-
+                        <label><input type="checkbox" name="3" value="1"> زنگ ۱</label>
+                        <label><input type="checkbox" name="3" value="2"> زنگ ۲</label>
+                        <label><input type="checkbox" name="3" value="3"> زنگ ۳</label>
+                        <label><input type="checkbox" name="3" value="4"> زنگ ۴</label>
                     </div>
 
                     <div class="day">
-
                         <h4>چهارشنبه</h4>
-
-                        <label>
-                            <input type="checkbox" name="4" value="1">
-                            زنگ ۱
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="4" value="2">
-                            زنگ ۲
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="4" value="3">
-                            زنگ ۳
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="4" value="4">
-                            زنگ ۴
-                        </label>
-
-                    </div>
-
-                    <div class="day">
-
-                        <h4>پنجشنبه</h4>
-
-                        <label>
-                            <input type="checkbox" name="5" value="1">
-                            زنگ ۱
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="5" value="2">
-                            زنگ ۲
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="5" value="3">
-                            زنگ ۳
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="5" value="4">
-                            زنگ ۴
-                        </label>
-
+                        <label><input type="checkbox" name="4" value="1"> زنگ ۱</label>
+                        <label><input type="checkbox" name="4" value="2"> زنگ ۲</label>
+                        <label><input type="checkbox" name="4" value="3"> زنگ ۳</label>
+                        <label><input type="checkbox" name="4" value="4"> زنگ ۴</label>
                     </div>
 
                 </div>
 
                 {{if .Error}}
-
                     <div class="error">
-
                         {{range .Error}}
-
                             <p>{{.}}</p>
-
                         {{end}}
-
                     </div>
-
                 {{end}}
 
                 <button type="submit">
@@ -267,37 +129,25 @@
             <h2>👨‍🏫 معلمان ثبت‌شده</h2>
 
             {{range .Teacher}}
-
                 <div class="teacher">
 
                     <div>
-
-                        <strong>
-                            {{.Name}}
-                        </strong>
-
-                        <p>
-                            {{.Subject}}
-                        </p>
-
+                        <strong>{{.Name}}</strong>
+                        <p>{{.Subject}}</p>
                     </div>
 
                     <form action="/deleteTeacher" method="POST">
-
                         <input
                             type="hidden"
                             name="id"
                             value="{{.ID}}"
                         >
-
                         <button type="submit">
                             حذف
                         </button>
-
                     </form>
 
                 </div>
-
             {{end}}
 
         </section>
@@ -305,16 +155,10 @@
     </main>
 
     <footer>
-
         برنامه‌ریزی مدرسه © ۲۰۲۶
-
-        <p>
-            محمد جواد حاتمی 101
-        </p>
-
+        <p>محمد جواد حاتمی 101</p>
     </footer>
 
 </body>
 
 </html>
-

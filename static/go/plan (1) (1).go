@@ -12,7 +12,7 @@ import (
 // ---------------------------------------------------------------------------
 
 const (
-	daysPerWeek   = 6 // days are numbered 0..5, exactly as in the rest of the project
+	daysPerWeek   = 5 // days are numbered 0..4: 0 Saturday, 1 Sunday, 2 Monday, 3 Tuesday, 4 Wednesday
 	periodsPerDay = 4 // periods are numbered 1..4 in PlanRow.Hour (index 0..3 inside this file)
 
 	// maxSearchSteps stops one search from running forever.
@@ -20,6 +20,24 @@ const (
 	// (it does NOT claim that a timetable is impossible).
 	maxSearchSteps = 500000
 )
+
+// legacyThursday is the old sixth day (index 5). Old teacher_times rows can
+// still contain it. It is no longer a school day, so those rows are ignored
+// without a warning and are never changed or deleted.
+const legacyThursday = 5
+
+// planDayNames says what each day number means. The number is what is stored
+// in teacher_times.day and week.day. The array length is daysPerWeek, so the
+// names can never list more days than the week has.
+var planDayNames = [daysPerWeek]string{"شنبه", "یکشنبه", "دوشنبه", "سه\u200cشنبه", "چهارشنبه"}
+
+// planDayName returns the name of a day number, for messages.
+func planDayName(day int) string {
+	if day < 0 || day >= daysPerWeek {
+		return fmt.Sprintf("day %d", day)
+	}
+	return planDayNames[day]
+}
 
 type PlanRow struct {
 	Grade      int
@@ -162,19 +180,20 @@ func subjectKey(text string) string {
 // Reading the "hours" number of teacher_times
 // ---------------------------------------------------------------------------
 
-// The hours column is an INTEGER. Two ways of writing it are understood:
+// The teacher form stores the checked periods of a day as one number made of
+// the period numbers: 1 = period 1, 12 = periods 1 and 2, 1234 = periods 1 to 4,
+// 24 = periods 2 and 4. The value 0 means "no period". This is the format the
+// application writes, so a single digit always means that period: 1 is period 1.
 //
-//	period list: the digits are the available periods.  124  = periods 1, 2 and 4
-//	flags:       one 0/1 flag per period, in order.      1011 = periods 1, 3 and 4
-//	             (a leading zero is lost in an INTEGER, so 111 means 0111)
-//
-// The two can be told apart for every value except the single digit 1
-// (period list: period 1, flags: 0001 = period 4). For that value the rest of
-// the data decides. The value 0 always means "no period".
+// Older test data may use four 0/1 flags instead (1111 = all four periods,
+// 1011 = periods 1, 3 and 4). That style is accepted only with exactly four
+// characters. Then it cannot be mistaken for a period list (a period list never
+// repeats a digit) and no leading zero can have been lost. Any other value that
+// is not a period list is reported and ignored, never guessed.
 
-// isFlagsValue is true for 2 to 4 characters that are all 0 or 1.
+// isFlagsValue is true for exactly periodsPerDay characters that are all 0 or 1.
 func isFlagsValue(text string) bool {
-	if len(text) < 2 || len(text) > periodsPerDay {
+	if len(text) != periodsPerDay {
 		return false
 	}
 	for _, ch := range text {
@@ -200,41 +219,16 @@ func isPeriodListValue(text string) bool {
 	return true
 }
 
-// detectFlagsEncoding looks at all availability values once.
-// flags is true when the data uses the flag style, mixed is true when both
-// styles appear (which is suspicious).
-func detectFlagsEncoding(teacherRows []TeacherRow) (flags bool, mixed bool) {
-	flagsSeen := false
-	listSeen := false
-	for _, row := range teacherRows {
-		for _, times := range row.teacherTimes {
-			if times.Hour <= 0 {
-				continue
-			}
-			text := strconv.Itoa(times.Hour)
-			if isFlagsValue(text) {
-				flagsSeen = true
-			} else if text != "1" && isPeriodListValue(text) {
-				listSeen = true
-			}
-		}
-	}
-	return flagsSeen && !listSeen, flagsSeen && listSeen
-}
-
 // decodeHours turns one stored number into the list of available periods
 // (index 0 is period 1). ok is false when the number cannot be understood.
-func decodeHours(value int, flagsDataset bool) (free [periodsPerDay]bool, ok bool) {
+func decodeHours(value int) (free [periodsPerDay]bool, ok bool) {
 	if value == 0 {
 		return free, true
 	}
 	text := strconv.Itoa(value)
 
 	switch {
-	case isFlagsValue(text), text == "1" && flagsDataset:
-		for len(text) < periodsPerDay {
-			text = "0" + text
-		}
+	case isFlagsValue(text):
 		for i, ch := range text {
 			if ch == '1' {
 				free[i] = true
@@ -251,18 +245,10 @@ func decodeHours(value int, flagsDataset bool) (free [periodsPerDay]bool, ok boo
 }
 
 // buildPlanTeachers decodes teacher availability (see decodeHours).
-//
-// Encoding used by the project: for every day there is one number in
-// teacher_times.hours. Its decimal digits are the available periods,
-// for example 124 means periods 1, 2 and 4. The value 0 means "no period".
+// Old rows for the former sixth day (legacyThursday) are skipped silently.
 func buildPlanTeachers(teacherRows []TeacherRow) ([]planTeacher, []string) {
 	var teachers []planTeacher
 	var warnings []string
-
-	flagsDataset, mixed := detectFlagsEncoding(teacherRows)
-	if mixed {
-		warnings = append(warnings, "The availability values mix two styles (periods such as 124 and flags such as 1011). Check teacher_times.")
-	}
 
 	for _, row := range teacherRows {
 		person := planTeacher{ID: row.ID, Name: row.Name, Subject: row.Subject}
@@ -272,17 +258,20 @@ func buildPlanTeachers(teacherRows []TeacherRow) ([]planTeacher, []string) {
 		}
 
 		for _, times := range row.teacherTimes {
+			if times.Day == legacyThursday {
+				continue // the old sixth day is no longer a school day
+			}
 			if times.Day < 0 || times.Day >= daysPerWeek {
-				warnings = append(warnings, fmt.Sprintf("Teacher %q (id %d) has availability for day %d, which is outside the school week. It was ignored.", row.Name, row.ID, times.Day))
+				warnings = append(warnings, fmt.Sprintf("Teacher %q (id %d) has availability for %s, which is outside the school week. It was ignored.", row.Name, row.ID, planDayName(times.Day)))
 				continue
 			}
 			if times.Hour == 0 {
 				continue // nothing available on this day
 			}
 
-			free, ok := decodeHours(times.Hour, flagsDataset)
+			free, ok := decodeHours(times.Hour)
 			if !ok {
-				warnings = append(warnings, fmt.Sprintf("Teacher %q (id %d), day %d: the availability value %d cannot be read (expected periods such as 124, or flags such as 1011). It was ignored.", row.Name, row.ID, times.Day, times.Hour))
+				warnings = append(warnings, fmt.Sprintf("Teacher %q (id %d), %s: the availability value %d cannot be read (expected periods such as 124, or four 0/1 flags such as 1011). It was ignored.", row.Name, row.ID, planDayName(times.Day), times.Hour))
 				continue
 			}
 			for p := 0; p < periodsPerDay; p++ {
@@ -491,8 +480,12 @@ func checkPlanResources(tasks []planTask, teachers []planTeacher) []string {
 
 	// A class cannot need more periods than the week has.
 	classLoad := map[[2]int]int{}
+	classBlocks := map[[2]int][]int{} // lengths of the continuous lessons of each class
 	for _, task := range tasks {
 		classLoad[[2]int{task.Grade, task.ClassID}] += task.Count
+		if task.Continuous && task.Count <= periodsPerDay {
+			classBlocks[[2]int{task.Grade, task.ClassID}] = append(classBlocks[[2]int{task.Grade, task.ClassID}], task.Count)
+		}
 	}
 	seenClass := map[[2]int]bool{}
 	for _, task := range tasks {
@@ -503,6 +496,13 @@ func checkPlanResources(tasks []planTask, teachers []planTeacher) []string {
 		seenClass[classKey] = true
 		if classLoad[classKey] > weekPeriods {
 			problems = append(problems, fmt.Sprintf("Grade %d class %d: its lessons need %d periods per week, but a week has only %d.", task.Grade, task.ClassID, classLoad[classKey], weekPeriods))
+		}
+		if !continuousBlocksFit(classBlocks[classKey]) {
+			var lengths []string
+			for _, length := range classBlocks[classKey] {
+				lengths = append(lengths, strconv.Itoa(length))
+			}
+			problems = append(problems, fmt.Sprintf("Grade %d class %d: its continuous lessons (%s periods) cannot all be placed, because each one must stay inside one day and a day has only %d periods (%d days).", task.Grade, task.ClassID, strings.Join(lengths, ", "), periodsPerDay, daysPerWeek))
 		}
 	}
 
@@ -522,6 +522,43 @@ func checkPlanResources(tasks []planTask, teachers []planTeacher) []string {
 	}
 
 	return problems
+}
+
+// continuousBlocksFit tells if continuous lessons of the given lengths can all
+// be placed in one class: every lesson must stay inside one day, and a day has
+// periodsPerDay periods. Normal lessons can fill any gap, so together with the
+// "at most 20 periods per class" check this decides the class on its own,
+// without looking at teachers.
+func continuousBlocksFit(lengths []int) bool {
+	sorted := append([]int(nil), lengths...)
+	sort.Sort(sort.Reverse(sort.IntSlice(sorted)))
+
+	var space [daysPerWeek]int
+	for d := range space {
+		space[d] = periodsPerDay
+	}
+	return fitBlocks(sorted, 0, &space)
+}
+
+// fitBlocks puts lengths[index] and all following lengths on the days.
+func fitBlocks(lengths []int, index int, space *[daysPerWeek]int) bool {
+	if index == len(lengths) {
+		return true
+	}
+	tried := map[int]bool{} // days with the same free space are equal, try only one of them
+	for d := 0; d < daysPerWeek; d++ {
+		if space[d] < lengths[index] || tried[space[d]] {
+			continue
+		}
+		tried[space[d]] = true
+
+		space[d] -= lengths[index]
+		if fitBlocks(lengths, index+1, space) {
+			return true
+		}
+		space[d] += lengths[index]
+	}
+	return false
 }
 
 // ---------------------------------------------------------------------------
@@ -993,7 +1030,7 @@ func validatePlan(plans []PlanRow, teacherRows []TeacherRow, lessonsRows []Lesso
 	placed := map[planClassLessonKey][]PlanRow{}
 
 	for _, row := range plans {
-		where := fmt.Sprintf("Grade %d class %d, day %d, period %d", row.Grade, row.ClassID, row.Day, row.Hour)
+		where := fmt.Sprintf("Grade %d class %d, %s, period %d", row.Grade, row.ClassID, planDayName(row.Day), row.Hour)
 
 		if row.Day < 0 || row.Day >= daysPerWeek || row.Hour < 1 || row.Hour > periodsPerDay {
 			problems = append(problems, where+": the day or period is outside the school week.")
@@ -1050,7 +1087,7 @@ func validatePlan(plans []PlanRow, teacherRows []TeacherRow, lessonsRows []Lesso
 		for d := 0; d < daysPerWeek; d++ {
 			for h := 1; h <= periodsPerDay; h++ {
 				if !seenSlot[planSlotKey{classRow.Grade, classRow.Grade_id, d, h}] {
-					problems = append(problems, fmt.Sprintf("Grade %d class %d, day %d, period %d: this period is missing from the timetable.", classRow.Grade, classRow.Grade_id, d, h))
+					problems = append(problems, fmt.Sprintf("Grade %d class %d, %s, period %d: this period is missing from the timetable.", classRow.Grade, classRow.Grade_id, planDayName(d), h))
 				}
 			}
 		}
