@@ -29,7 +29,7 @@
         </div>
 
         <p class="description">
-            اطلاعات معلمان و ساعات کاری آن‌ها را وارد کنید.
+            اطلاعات معلمان، درس‌هایی که تدریس می‌کنند و ساعات کاری آن‌ها را وارد کنید.
         </p>
 
         <section class="form-card">
@@ -47,19 +47,27 @@
                         id="teacher-name"
                         name="name"
                         placeholder="مثلاً علی احمدی"
+                        required
                     >
                 </div>
 
                 <div class="form-group">
-                    <label for="subject">
-                        درس
-                    </label>
-                    <input
-                        type="text"
-                        id="subject"
-                        name="subject"
-                        placeholder="مثلاً ریاضی"
-                    >
+                    <label>درس‌هایی که معلم تدریس می‌کند</label>
+
+                    <div id="subjects">
+                        <div class="subject-row">
+                            <input
+                                type="text"
+                                name="subject"
+                                placeholder="مثلاً ریاضی"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="addSubject()">
+                        ➕ افزودن درس
+                    </button>
                 </div>
 
                 <h3>⏰ ساعات کاری</h3>
@@ -158,6 +166,8 @@
         برنامه‌ریزی مدرسه © ۲۰۲۶
         <p>محمد جواد حاتمی 101</p>
     </footer>
+
+    <script src="/js/teacher.js"></script>
 
 </body>
 
