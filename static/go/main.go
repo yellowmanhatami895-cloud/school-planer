@@ -65,7 +65,7 @@ func main() {
 	http.HandleFunc("/plan", plan)
 	http.HandleFunc("/lessons", lessons)
 	http.HandleFunc("/home", Home)
-	http.HandleFunc("/deleteTeacher", deleteTeacher)
+	http.HandleFunc("/deleteTeacher", deleteTeacherByClick)
 	http.HandleFunc("/deleteClass", deleteClass)
 	http.HandleFunc("/deleteLessons", deleteLessons)
 	fmt.Println(":8080")
@@ -82,14 +82,15 @@ func teacher(w http.ResponseWriter, r *http.Request) {
 	var data TeacherERR
 
 	if r.Method == http.MethodPost {
-		inputs := getInputs(r, []string{"name", "subject"})
+		name := getInputs(r, []string{"name"})
+		subjects := getInputs(r, []string{"subject"})
 		multipleInputs := getMultipleInputs(r, []string{"0", "1", "2", "3", "4", "5"})
 
-		if inputs[0] == "" {
+		if name[0] == "" {
 			data.Error = append(data.Error, "نام معلم را وارد کنید")
 		}
 
-		if inputs[1] == "" {
+		if name[1] == "" {
 			data.Error = append(data.Error, "موضوع درس را وارد کنید")
 		}
 
@@ -98,7 +99,7 @@ func teacher(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if len(data.Error) == 0 {
-			InsertIntoTeacher(w, inputs[0], inputs[1], [][]string{multipleInputs[0], multipleInputs[1], multipleInputs[2], multipleInputs[3], multipleInputs[4], multipleInputs[5]})
+			InsertIntoTeacher(w, name[0], subjects, [][]string{multipleInputs[0], multipleInputs[1], multipleInputs[2], multipleInputs[3], multipleInputs[4], multipleInputs[5]})
 			http.Redirect(w, r, "/teachers", http.StatusSeeOther)
 			return
 		}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -9,89 +10,145 @@ import (
 type TeacherRow struct {
 	ID           int
 	Name         string
-	Subject      string
+	Subject      []string
 	teacherTimes []TeacherTimes
 }
 
-func InsertIntoTeacher(w http.ResponseWriter, name string, subject string, week [][]string) {
-	result, err := db.Exec("INSERT INTO teachers(name,subject) VALUES(?,?)", name, subject)
+func InsertIntoTeacher(w http.ResponseWriter, name string, subjects []string, week [][]string) {
+	tx, err := db.Begin()
 	if err != nil {
 		fmt.Println(err)
-
 		return
 	}
+	defer tx.Rollback()
+
+	result, err := tx.Exec("INSERT INTO teachers(name) VALUES(?)", name)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	teacherID, err := result.LastInsertId()
-
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Println(teacherID)
-	InsertIntoTeacherTimes(w, int(teacherID), week)
-}
-func InsertIntoTeacherTimes(w http.ResponseWriter, teacherID int, week [][]string) {
-
-	for i, hours := range week {
-
-		var day int
-
-		switch i {
-		case 0:
-			day = 0
-		case 1:
-			day = 1
-		case 2:
-			day = 2
-		case 3:
-			day = 3
-		case 4:
-			day = 4
-		case 5:
-			day = 5
-		}
-
-		var hour string
-		for _, h := range hours {
-			hour = hour + h
-		}
-		hourInt, err := strconv.Atoi(hour)
+	for _, s := range subjects {
+		_, err = tx.Exec("INSERT INTO teacher_subject(subject,teacher_id) VALUES(?,?)", s, teacherID)
 		if err != nil {
 			fmt.Println(err)
-		}
-		_, err = db.Exec("INSERT INTO teacher_times(teacher_id, day, hours) VALUES(?, ?, ?)", teacherID, day, hourInt)
-		if err != nil {
-			fmt.Println(err)
-
 			return
 		}
 	}
 
+	err = InsertIntoTeacherTimesTx(tx, int(teacherID), week)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
+
+func deleteTeacherByErr(teacherID int) {
+	_, err := db.Exec("DELETE FROM teacher_subject WHERE teacher_id = ?", teacherID)
+	if err != nil {
+		fmt.Println(err)
+	}
+	_, err = db.Exec("DELETE FROM teacher_times WHERE teacher_id = ?", teacherID)
+	if err != nil {
+		fmt.Println(err)
+	}
+	_, err = db.Exec("DELETE FROM teachers WHERE id = ?", teacherID)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+}
+
+func InsertIntoTeacherTimesTx(tx *sql.Tx, teacherID int, week [][]string) error {
+	if len(week) > 5 {
+		return fmt.Errorf("تعداد روزها نمی‌تواند بیشتر از 5 باشد")
+	}
+
+	for i, hours := range week {
+		var hour string
+		for _, h := range hours {
+			hour += h
+		}
+
+		hourInt, err := strconv.Atoi(hour)
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.Exec(
+			"INSERT INTO teacher_times(teacher_id, day, hours) VALUES(?, ?, ?)",
+			teacherID, i, hourInt,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func getTeachersRow(w http.ResponseWriter) []TeacherRow {
-	row, err := db.Query("SELECT id,name,subject FROM teachers")
+	row, err := db.Query("SELECT id,name FROM teachers")
 	if err != nil {
 		fmt.Println(err)
 
 		return []TeacherRow{}
 	}
+
 	defer row.Close()
 	var id int
 	var name string
-	var subject string
 	var teachers []TeacherRow
+
 	for row.Next() {
-		err := row.Scan(&id, &name, &subject)
+		var subjects []string
+		err := row.Scan(&id, &name)
 		if err != nil {
 			fmt.Println(err)
 
 			return []TeacherRow{}
 		}
+		rowSubjects, err := db.Query("SELECT subject FROM teacher_subject WHERE teacher_id = ?", id)
+		if err != nil {
+			fmt.Println(err)
+			return []TeacherRow{}
+		}
+
+		for rowSubjects.Next() {
+			var subject string
+
+			err := rowSubjects.Scan(&subject)
+			if err != nil {
+				fmt.Println(err)
+				rowSubjects.Close()
+				return []TeacherRow{}
+			}
+
+			subjects = append(subjects, subject)
+		}
+		err = rowSubjects.Err()
+		if err != nil {
+			fmt.Println(err)
+			return []TeacherRow{}
+		}
 		teachers = append(teachers, TeacherRow{
 			ID:      id,
 			Name:    name,
-			Subject: subject,
+			Subject: subjects,
 		})
+		rowSubjects.Close()
 	}
 	err = row.Err()
 	if err != nil {
@@ -102,7 +159,7 @@ func getTeachersRow(w http.ResponseWriter) []TeacherRow {
 
 	return teachers
 }
-func deleteTeacher(w http.ResponseWriter, r *http.Request) {
+func deleteTeacherByClick(w http.ResponseWriter, r *http.Request) {
 
 	id := r.FormValue("id")
 
@@ -112,7 +169,12 @@ func deleteTeacher(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+	_, err = db.Exec("DELETE FROM teacher_subject WHERE teacher_id = ?", id)
+	if err != nil {
+		fmt.Println(err)
 
+		return
+	}
 	_, err = db.Exec("DELETE FROM teachers WHERE id = ?", id)
 	if err != nil {
 		fmt.Println(err)
@@ -126,7 +188,7 @@ func deleteTeacher(w http.ResponseWriter, r *http.Request) {
 func collectTeacherInformation() []TeacherRow {
 	var teacherRows []TeacherRow
 
-	teacherRow, err := db.Query("SELECT id,name,subject FROM teachers")
+	teacherRow, err := db.Query("SELECT id,name FROM teachers")
 	if err != nil {
 		fmt.Println(err)
 		return []TeacherRow{}
@@ -136,18 +198,36 @@ func collectTeacherInformation() []TeacherRow {
 		var teacherTimes []TeacherTimes
 		var teacherID int
 		var teacherName string
-		var teacherSubject string
+
 		var teacherDay int
 		var teacherHours int
-		teacherRow.Scan(&teacherID, &teacherName, &teacherSubject)
-
+		var subjects []string
+		err := teacherRow.Scan(&teacherID, &teacherName)
+		if err != nil {
+			fmt.Println(err)
+			return []TeacherRow{}
+		}
 		teacherTimesRow, err := db.Query("SELECT day,hours FROM teacher_times WHERE teacher_id = ? ", teacherID)
 		if err != nil {
 			fmt.Println(err)
 			return []TeacherRow{}
 		}
+
+		subjectRow, err := db.Query("SELECT subject FROM teacher_subject WHERE teacher_id = ?", teacherID)
+		if err != nil {
+			fmt.Println(err)
+			teacherTimesRow.Close()
+			return []TeacherRow{}
+		}
+
 		for teacherTimesRow.Next() {
-			teacherTimesRow.Scan(&teacherDay, &teacherHours)
+			err := teacherTimesRow.Scan(&teacherDay, &teacherHours)
+			if err != nil {
+				fmt.Println(err)
+				teacherTimesRow.Close()
+				subjectRow.Close()
+				return []TeacherRow{}
+			}
 			teacherTimes = append(teacherTimes, TeacherTimes{
 				Day:  teacherDay,
 				Hour: teacherHours,
@@ -156,15 +236,39 @@ func collectTeacherInformation() []TeacherRow {
 		err = teacherTimesRow.Err()
 		if err != nil {
 			fmt.Println(err)
+			teacherTimesRow.Close()
+			subjectRow.Close()
 			return []TeacherRow{}
 		}
 
+		for subjectRow.Next() {
+			var subject string
+			err := subjectRow.Scan(&subject)
+			if err != nil {
+				fmt.Println(err)
+				teacherTimesRow.Close()
+				subjectRow.Close()
+				return []TeacherRow{}
+			}
+			subjects = append(subjects, subject)
+		}
+		err = subjectRow.Err()
+		if err != nil {
+			fmt.Println(err)
+			teacherTimesRow.Close()
+			subjectRow.Close()
+			return []TeacherRow{}
+		}
 		teacherRows = append(teacherRows, TeacherRow{
 			Name:         teacherName,
-			Subject:      teacherSubject,
+			Subject:      subjects,
 			ID:           teacherID,
 			teacherTimes: teacherTimes,
 		})
+
+		teacherTimesRow.Close()
+		subjectRow.Close()
+
 	}
 	err = teacherRow.Err()
 	if err != nil {

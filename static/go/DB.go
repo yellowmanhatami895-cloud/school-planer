@@ -7,7 +7,13 @@ import (
 )
 
 func createTables() {
-	_, err := db.Exec("CREATE TABLE IF NOT EXISTS teachers (id INTEGER PRIMARY KEY,name TEXT NOT NULL,subject TEXT NOT NULL);")
+
+	_, err := db.Exec("CREATE TABLE IF NOT EXISTS teachers (id INTEGER PRIMARY KEY,name TEXT NOT NULL);")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS teacher_subject (subject TEXT PRIMARY KEY,teacher_id INTEGER NOT NULL,FOREIGN KEY (teacher_id) REFERENCES teachers(id));")
 	if err != nil {
 		fmt.Println(err)
 		return
