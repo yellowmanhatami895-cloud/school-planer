@@ -82,12 +82,16 @@ func InsertIntoTeacherTimesTx(tx *sql.Tx, teacherID int, week [][]string) error 
 			hour += h
 		}
 
-		hourInt, err := strconv.Atoi(hour)
-		if err != nil {
-			return err
+		var hourInt int
+		if hour != "" {
+			var err error
+			hourInt, err = strconv.Atoi(hour)
+			if err != nil {
+				return err
+			}
 		}
 
-		_, err = tx.Exec(
+		_, err := tx.Exec(
 			"INSERT INTO teacher_times(teacher_id, day, hours) VALUES(?, ?, ?)",
 			teacherID, i, hourInt,
 		)

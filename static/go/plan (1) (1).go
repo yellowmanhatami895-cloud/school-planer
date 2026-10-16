@@ -137,7 +137,7 @@ func InsertIntoWeek(plans []PlanRow) error {
 type planTeacher struct {
 	ID        int
 	Name      string
-	Subject   string
+	Subject   []string
 	Free      [daysPerWeek][periodsPerDay]bool // Free[day][period-1]
 	FreeCount int
 }
@@ -170,6 +170,17 @@ type planCandidate struct {
 // subjectKey makes subject comparison forgiving about spaces and letter case.
 func subjectKey(text string) string {
 	return strings.ToLower(strings.TrimSpace(text))
+}
+func teacherHasSubject(teacher planTeacher, subject string) bool {
+	target := subjectKey(subject)
+
+	for _, teacherSubject := range teacher.Subject {
+		if subjectKey(teacherSubject) == target {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ---------------------------------------------------------------------------
@@ -333,8 +344,8 @@ func buildPlanTasks(classRows []ClassRow, lessonsRows []LessonsRow, teachers []p
 				Continuous: lessonRow.ScheduleType,
 			}
 			for teacherIndex := range teachers {
-				if teachers[teacherIndex].FreeCount > 0 && subjectKey(teachers[teacherIndex].Subject) == subjectKey(lessonRow.Name) {
-					task.Teachers = append(task.Teachers, teacherIndex)
+				if teachers[teacherIndex].FreeCount > 0 &&
+					teacherHasSubject(teachers[teacherIndex], lessonRow.Name) {
 				}
 			}
 			tasks = append(tasks, task)
@@ -404,12 +415,12 @@ func subjectTotals(tasks []planTask, teachers []planTeacher) map[string]*subject
 		info[key].Classes++
 	}
 
-	for key, subject := range info {
+	for _, subject := range info {
 		for d := 0; d < daysPerWeek; d++ {
 			for p := 0; p < periodsPerDay; p++ {
 				free := 0
 				for teacherIndex := range teachers {
-					if subjectKey(teachers[teacherIndex].Subject) == key && teachers[teacherIndex].Free[d][p] {
+					if teacherHasSubject(teachers[teacherIndex], subject.Name) && teachers[teacherIndex].Free[d][p] {
 						free++
 					}
 				}
@@ -1067,8 +1078,16 @@ func validatePlan(plans []PlanRow, teacherRows []TeacherRow, lessonsRows []Lesso
 			problems = append(problems, fmt.Sprintf("%s: teacher id %d does not exist.", where, row.TeacherID))
 			continue
 		}
-		if subjectKey(person.Subject) != subjectKey(row.LessonName) {
-			problems = append(problems, fmt.Sprintf("%s: teacher %q teaches %q, not %q.", where, person.Name, person.Subject, row.LessonName))
+		if !teacherHasSubject(person, row.LessonName) {
+			problems = append(
+				problems,
+				fmt.Sprintf(
+					"%s: teacher %q does not teach %q.",
+					where,
+					person.Name,
+					row.LessonName,
+				),
+			)
 		}
 		if !person.Free[row.Day][row.Hour-1] {
 			problems = append(problems, fmt.Sprintf("%s: teacher %q is not available in this period.", where, person.Name))

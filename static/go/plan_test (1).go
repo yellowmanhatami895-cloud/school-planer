@@ -9,7 +9,11 @@ import (
 
 // teacherWithHours makes a teacher who has the same "hours" value on every school day.
 func teacherWithHours(id int, subject string, hours int) TeacherRow {
-	row := TeacherRow{ID: id, Name: "Teacher" + subject, Subject: subject}
+	row := TeacherRow{
+		ID:      id,
+		Name:    "Teacher" + subject,
+		Subject: []string{subject},
+	}
 	for day := 0; day < daysPerWeek; day++ {
 		row.teacherTimes = append(row.teacherTimes, TeacherTimes{Day: day, Hour: hours})
 	}
@@ -199,7 +203,7 @@ func TestInsufficientCapacityIsReported(t *testing.T) {
 	teacherRows, lessonRows, classRows := scenarioRows(false)
 	// Give every S1 teacher one period per day: 3 teachers x 5 = 15 < 27.
 	for i := range teacherRows {
-		if teacherRows[i].Subject == "S1" {
+		if len(teacherRows[i].Subject) > 0 && teacherRows[i].Subject[0] == "S1" {
 			teacherRows[i] = teacherWithHours(teacherRows[i].ID, "S1", 1)
 		}
 	}
@@ -300,8 +304,8 @@ func TestContinuousBlocksFit(t *testing.T) {
 	}{
 		{nil, true},
 		{[]int{3, 3, 3, 3, 3}, true},
-		{[]int{3, 3, 3, 3, 3, 3}, false},       // 6 blocks of 3 need 6 days
-		{[]int{3, 3, 3, 3, 3, 2}, false},       // only 17 periods, but no day has room for 2 more
+		{[]int{3, 3, 3, 3, 3, 3}, false}, // 6 blocks of 3 need 6 days
+		{[]int{3, 3, 3, 3, 3, 2}, false}, // only 17 periods, but no day has room for 2 more
 		{[]int{3, 3, 3, 3, 3, 1, 1, 1, 1, 1}, true},
 		{[]int{2, 2, 2, 2, 2, 2, 2, 2, 2, 2}, true}, // 10 blocks of 2 fill 20 periods
 		{[]int{4, 4, 4, 4, 4}, true},
@@ -371,7 +375,14 @@ func TestValidateDetectsTeacherOutsideAvailability(t *testing.T) {
 
 	// Now every teacher is only available in periods 1 and 2, but the timetable uses periods 3 and 4 too.
 	for i := range teacherRows {
-		teacherRows[i] = teacherWithHours(teacherRows[i].ID, teacherRows[i].Subject, 12)
+		teacherRows[i].teacherTimes = nil
+
+		for day := 0; day < daysPerWeek; day++ {
+			teacherRows[i].teacherTimes = append(
+				teacherRows[i].teacherTimes,
+				TeacherTimes{Day: day, Hour: 12},
+			)
+		}
 	}
 	problems := validatePlan(plans, teacherRows, lessonRows, classRows)
 	if !containsText(problems, "not available") {
@@ -393,7 +404,8 @@ func TestFailedPlanKeepsSavedTimetable(t *testing.T) {
 	createTables()
 
 	statements := []string{
-		"INSERT INTO teachers(id,name,subject) VALUES(1,'T','Math')",
+		"INSERT INTO teachers(id,name) VALUES(1,'T')",
+		"INSERT INTO teacher_subject(teacher_id,subject) VALUES(1,'Math')",
 		"INSERT INTO teacher_times(teacher_id,day,hours) VALUES(1,0,1234)",
 		"INSERT INTO classes VALUES(1,10)",
 		"INSERT INTO lessons VALUES('Math','10','8',0)", // needs 8 periods, but the teacher has only 4 in the whole week

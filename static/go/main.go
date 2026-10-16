@@ -83,14 +83,14 @@ func teacher(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		name := getInputs(r, []string{"name"})
-		subjects := getInputs(r, []string{"subject"})
-		multipleInputs := getMultipleInputs(r, []string{"0", "1", "2", "3", "4", "5"})
+		subjects := r.Form["subject"]
+		multipleInputs := getMultipleInputs(r, []string{"0", "1", "2", "3", "4"})
 
 		if name[0] == "" {
 			data.Error = append(data.Error, "نام معلم را وارد کنید")
 		}
 
-		if name[1] == "" {
+		if subjects[0] == "" {
 			data.Error = append(data.Error, "موضوع درس را وارد کنید")
 		}
 
@@ -99,7 +99,7 @@ func teacher(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if len(data.Error) == 0 {
-			InsertIntoTeacher(w, name[0], subjects, [][]string{multipleInputs[0], multipleInputs[1], multipleInputs[2], multipleInputs[3], multipleInputs[4], multipleInputs[5]})
+			InsertIntoTeacher(w, name[0], subjects, [][]string{multipleInputs[0], multipleInputs[1], multipleInputs[2], multipleInputs[3], multipleInputs[4]})
 			http.Redirect(w, r, "/teachers", http.StatusSeeOther)
 			return
 		}

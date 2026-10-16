@@ -139,10 +139,16 @@
             {{range .Teacher}}
                 <div class="teacher">
 
-                    <div>
-                        <strong>{{.Name}}</strong>
-                        <p>{{.Subject}}</p>
-                    </div>
+                    
+            <div>
+                <strong>{{.Name}}</strong>
+                <p>
+                    {{range $index, $subject := .Subject}}
+                        {{if $index}}، {{end}}{{$subject}}
+                    {{end}}
+                </p>
+            </div>
+
 
                     <form action="/deleteTeacher" method="POST">
                         <input
