@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // ---------------------------------------------------------------------------
@@ -12,24 +13,18 @@ import (
 // ---------------------------------------------------------------------------
 
 const (
-	daysPerWeek   = 5 // days are numbered 0..4: 0 Saturday, 1 Sunday, 2 Monday, 3 Tuesday, 4 Wednesday
+	daysPerWeek   = 6 // days are numbered 0..5: 0 Saturday, 1 Sunday, 2 Monday, 3 Tuesday, 4 Wednesday, 5 Thursday
 	periodsPerDay = 4 // periods are numbered 1..4 in PlanRow.Hour (index 0..3 inside this file)
-
-	// maxSearchSteps stops one search from running forever.
-	// If it is reached, the program says "not found within the limit"
-	// (it does NOT claim that a timetable is impossible).
-	maxSearchSteps = 500000
 )
 
-// legacyThursday is the old sixth day (index 5). Old teacher_times rows can
-// still contain it. It is no longer a school day, so those rows are ignored
-// without a warning and are never changed or deleted.
-const legacyThursday = 5
+// maxSearchSteps stops one search from running forever. If it is reached, the
+// program says "not found within the limit" (it does NOT claim that a
+// timetable is impossible). It is a variable only so that tests can lower it.
+var maxSearchSteps = 500000
 
 // planDayNames says what each day number means. The number is what is stored
-// in teacher_times.day and week.day. The array length is daysPerWeek, so the
-// names can never list more days than the week has.
-var planDayNames = [daysPerWeek]string{"شنبه", "یکشنبه", "دوشنبه", "سه\u200cشنبه", "چهارشنبه"}
+// in teacher_times.day and week.day.
+var planDayNames = [daysPerWeek]string{"شنبه", "یکشنبه", "دوشنبه", "سه\u200cشنبه", "چهارشنبه", "پنجشنبه"}
 
 // planDayName returns the name of a day number, for messages.
 func planDayName(day int) string {
@@ -48,14 +43,59 @@ type PlanRow struct {
 	TeacherID  int
 }
 
+// planStatus says WHY a generation did or did not succeed.
+type planStatus int
+
+const (
+	planSucceeded        planStatus = iota
+	planInvalidData                 // the input data is wrong or incomplete
+	planProvenImpossible            // arithmetic proves that no timetable exists
+	planSearchExhausted             // the complete search found no timetable
+	planLimitReached                // the search stopped at maxSearchSteps; a timetable may still exist
+	planInternalError               // validation or database failure
+)
+
+func (s planStatus) String() string {
+	switch s {
+	case planSucceeded:
+		return "succeeded"
+	case planInvalidData:
+		return "invalid input data"
+	case planProvenImpossible:
+		return "proven impossible"
+	case planSearchExhausted:
+		return "no valid timetable exists (complete search)"
+	case planLimitReached:
+		return "search limit reached (a timetable may still exist)"
+	}
+	return "internal error"
+}
+
+// planResult is everything generation reports. Rows is only filled when Status
+// is planSucceeded.
+type planResult struct {
+	Rows     []PlanRow
+	Warnings []string
+	Problems []string
+	Status   planStatus
+	Err      error
+}
+
 // ---------------------------------------------------------------------------
 // makePlan: the function the rest of the project already calls
 // ---------------------------------------------------------------------------
 
-// makePlan loads the data, builds a timetable in memory, validates it and only
-// then replaces the saved timetable. If anything fails, the saved timetable in
-// the database is left untouched and the reasons are printed to the console.
-func makePlan() {
+// planMutex makes sure two requests cannot generate and replace the timetable
+// at the same time.
+var planMutex sync.Mutex
+
+// generateAndSavePlan loads the data, builds a timetable in memory, validates it
+// and only then replaces the saved timetable. If anything fails, the saved
+// timetable is left untouched. A web handler can use the returned Status.
+func generateAndSavePlan() planResult {
+	planMutex.Lock()
+	defer planMutex.Unlock()
+
 	teacherRows := collectTeacherInformation()
 	lessonsRows := collectLessonsInformation()
 	classRows := collectClassInformation()
@@ -63,39 +103,50 @@ func makePlan() {
 	// The collect functions return empty lists when a database error happens.
 	// In that case we must not replace the saved timetable.
 	if len(classRows) == 0 || len(lessonsRows) == 0 {
-		fmt.Println("Timetable not generated: no classes or no lessons were found. The saved timetable was not changed.")
-		return
-	}
-
-	plans, warnings, problems := generatePlan(teacherRows, lessonsRows, classRows)
-
-	for _, message := range warnings {
-		fmt.Println("Warning:", message)
-	}
-	if len(problems) > 0 {
-		fmt.Println("The timetable could not be completed and was NOT saved. The saved timetable was not changed.")
-		for _, message := range problems {
-			fmt.Println(" -", message)
+		return planResult{
+			Status:   planInvalidData,
+			Problems: []string{"no classes or no lessons were found (or they could not be read from the database)."},
 		}
-		return
+	}
+
+	result := generatePlanResult(teacherRows, lessonsRows, classRows)
+	if result.Status != planSucceeded {
+		return result
 	}
 
 	// Check the finished timetable once more, independently of the search.
-	problems = validatePlan(plans, teacherRows, lessonsRows, classRows)
+	problems := validatePlan(result.Rows, teacherRows, lessonsRows, classRows)
 	if len(problems) > 0 {
-		fmt.Println("The generated timetable failed validation and was NOT saved. The saved timetable was not changed.")
-		for _, message := range problems {
+		result.Rows = nil
+		result.Problems = problems
+		result.Status = planInternalError
+		return result
+	}
+
+	if saveError := InsertIntoWeek(result.Rows); saveError != nil {
+		result.Rows = nil
+		result.Err = saveError
+		result.Problems = []string{"the timetable could not be saved: " + saveError.Error()}
+		result.Status = planInternalError
+	}
+	return result
+}
+
+// makePlan keeps its old signature. It runs the generation and prints the outcome.
+func makePlan() {
+	result := generateAndSavePlan()
+
+	for _, message := range result.Warnings {
+		fmt.Println("Warning:", message)
+	}
+	if result.Status != planSucceeded {
+		fmt.Printf("Timetable NOT generated (%s). The saved timetable was not changed.\n", result.Status)
+		for _, message := range result.Problems {
 			fmt.Println(" -", message)
 		}
 		return
 	}
-
-	saveError := InsertIntoWeek(plans)
-	if saveError != nil {
-		fmt.Println("The timetable could not be saved:", saveError)
-		return
-	}
-	fmt.Println("Timetable generated and saved:", len(plans), "rows")
+	fmt.Println("Timetable generated and saved:", len(result.Rows), "rows")
 }
 
 // InsertIntoWeek replaces the content of the week table with the given rows.
@@ -134,12 +185,14 @@ func InsertIntoWeek(plans []PlanRow) error {
 // ---------------------------------------------------------------------------
 
 // planTeacher is a teacher with a ready-to-use availability table.
+// One person is ONE planTeacher, however many subjects they teach.
 type planTeacher struct {
-	ID        int
-	Name      string
-	Subject   []string
-	Free      [daysPerWeek][periodsPerDay]bool // Free[day][period-1]
-	FreeCount int
+	ID          int
+	Name        string
+	Subject     []string                         // trimmed names, without duplicates
+	SubjectKeys map[string]bool                  // normalized names, for fast matching
+	Free        [daysPerWeek][periodsPerDay]bool // Free[day][period-1]
+	FreeCount   int
 }
 
 // planTask means: "this class needs this lesson this many times per week".
@@ -167,25 +220,26 @@ type planCandidate struct {
 	Period  int // first period, 0..3
 }
 
-// subjectKey makes subject comparison forgiving about spaces and letter case.
+// subjectReplacer unifies characters that look the same in Persian text but
+// are stored differently (Arabic yeh/kaf, non-breaking spaces, half-spaces).
+var subjectReplacer = strings.NewReplacer(
+	"ي", "ی",
+	"ك", "ک",
+	"\u200c", " ",
+	"\u00a0", " ",
+)
+
+// subjectKey is the one place that decides when two subject names are equal:
+// surrounding and repeated spaces are removed, Arabic letter variants are
+// unified and case is ignored. Different words are never merged.
 func subjectKey(text string) string {
-	return strings.ToLower(strings.TrimSpace(text))
-}
-func teacherHasSubject(teacher planTeacher, subject string) bool {
-	target := subjectKey(subject)
-
-	for _, teacherSubject := range teacher.Subject {
-		if subjectKey(teacherSubject) == target {
-			return true
-		}
-	}
-
-	return false
+	text = subjectReplacer.Replace(text)
+	return strings.ToLower(strings.Join(strings.Fields(text), " "))
 }
 
-// ---------------------------------------------------------------------------
-// Step 1: convert the loaded rows into scheduler data
-// ---------------------------------------------------------------------------
+func teacherHasSubject(teacher *planTeacher, subject string) bool {
+	return teacher.SubjectKeys[subjectKey(subject)]
+}
 
 // ---------------------------------------------------------------------------
 // Reading the "hours" number of teacher_times
@@ -255,23 +309,43 @@ func decodeHours(value int) (free [periodsPerDay]bool, ok bool) {
 	return free, false
 }
 
+// ---------------------------------------------------------------------------
+// Step 1: convert the loaded rows into scheduler data
+// ---------------------------------------------------------------------------
+
 // buildPlanTeachers decodes teacher availability (see decodeHours).
-// Old rows for the former sixth day (legacyThursday) are skipped silently.
+//
+// Rows with the same teacher ID are merged into ONE teacher: their subjects and
+// availability records are combined. (A query that returns one row per subject
+// therefore does not create several teachers.) Several availability records for
+// the same day are combined with "or", so no available period is lost.
 func buildPlanTeachers(teacherRows []TeacherRow) ([]planTeacher, []string) {
 	var teachers []planTeacher
 	var warnings []string
+	var recordCount []int // availability records seen for each teacher
+	position := map[int]int{}
 
 	for _, row := range teacherRows {
-		person := planTeacher{ID: row.ID, Name: row.Name, Subject: row.Subject}
+		index, seen := position[row.ID]
+		if !seen {
+			teachers = append(teachers, planTeacher{ID: row.ID, Name: row.Name, SubjectKeys: map[string]bool{}})
+			recordCount = append(recordCount, 0)
+			index = len(teachers) - 1
+			position[row.ID] = index
+		}
+		person := &teachers[index]
 
-		if len(row.teacherTimes) == 0 {
-			warnings = append(warnings, fmt.Sprintf("Teacher %q (id %d) has no availability records and will not be used.", row.Name, row.ID))
+		for _, subject := range row.Subject {
+			key := subjectKey(subject)
+			if key == "" || person.SubjectKeys[key] {
+				continue // empty or duplicate subject
+			}
+			person.SubjectKeys[key] = true
+			person.Subject = append(person.Subject, strings.TrimSpace(subject))
 		}
 
+		recordCount[index] += len(row.teacherTimes)
 		for _, times := range row.teacherTimes {
-			if times.Day == legacyThursday {
-				continue // the old sixth day is no longer a school day
-			}
 			if times.Day < 0 || times.Day >= daysPerWeek {
 				warnings = append(warnings, fmt.Sprintf("Teacher %q (id %d) has availability for %s, which is outside the school week. It was ignored.", row.Name, row.ID, planDayName(times.Day)))
 				continue
@@ -291,7 +365,10 @@ func buildPlanTeachers(teacherRows []TeacherRow) ([]planTeacher, []string) {
 				}
 			}
 		}
+	}
 
+	for index := range teachers {
+		person := &teachers[index]
 		for d := 0; d < daysPerWeek; d++ {
 			for p := 0; p < periodsPerDay; p++ {
 				if person.Free[d][p] {
@@ -299,17 +376,23 @@ func buildPlanTeachers(teacherRows []TeacherRow) ([]planTeacher, []string) {
 				}
 			}
 		}
-		if len(row.teacherTimes) > 0 && person.FreeCount == 0 {
-			warnings = append(warnings, fmt.Sprintf("Teacher %q (id %d) has no usable available period and will not be used.", row.Name, row.ID))
+		if len(person.SubjectKeys) == 0 {
+			warnings = append(warnings, fmt.Sprintf("Teacher %q (id %d) has no subject and will not be used.", person.Name, person.ID))
 		}
-
-		teachers = append(teachers, person)
+		if recordCount[index] == 0 {
+			warnings = append(warnings, fmt.Sprintf("Teacher %q (id %d) has no availability records and will not be used.", person.Name, person.ID))
+		} else if person.FreeCount == 0 {
+			warnings = append(warnings, fmt.Sprintf("Teacher %q (id %d) has no usable available period and will not be used.", person.Name, person.ID))
+		}
 	}
 
 	return teachers, warnings
 }
 
-// buildPlanTasks creates one task for every (class, lesson of the same grade).
+// buildPlanTasks creates one task for every (class, lesson of the same grade)
+// and lists the teachers who are allowed to teach it: they must be registered
+// for the subject and have at least one available period.
+// It returns tasks, warnings and problems (problems = invalid input data).
 func buildPlanTasks(classRows []ClassRow, lessonsRows []LessonsRow, teachers []planTeacher) ([]planTask, []string, []string) {
 	var tasks []planTask
 	var warnings []string
@@ -320,18 +403,39 @@ func buildPlanTasks(classRows []ClassRow, lessonsRows []LessonsRow, teachers []p
 		gradeHasClass[classRow.Grade] = true
 	}
 
+	type lessonKey struct {
+		Name  string
+		Grade int
+	}
+	seenLesson := map[lessonKey]bool{}
+	var usableLessons []LessonsRow
+
 	for _, lessonRow := range lessonsRows {
 		if !gradeHasClass[lessonRow.Grade] {
 			warnings = append(warnings, fmt.Sprintf("Lesson %q for grade %d was ignored because there is no class in that grade.", lessonRow.Name, lessonRow.Grade))
+			continue
 		}
-		if lessonRow.Count <= 0 && gradeHasClass[lessonRow.Grade] {
+		if subjectKey(lessonRow.Name) == "" {
+			problems = append(problems, fmt.Sprintf("A lesson of grade %d has an empty name.", lessonRow.Grade))
+			continue
+		}
+		key := lessonKey{subjectKey(lessonRow.Name), lessonRow.Grade}
+		if seenLesson[key] {
+			problems = append(problems, fmt.Sprintf("Lesson %q (grade %d) is defined more than once.", lessonRow.Name, lessonRow.Grade))
+			continue
+		}
+		seenLesson[key] = true
+
+		if lessonRow.Count <= 0 {
 			problems = append(problems, fmt.Sprintf("Lesson %q (grade %d) has %d weekly periods. The value is missing, zero or could not be read.", lessonRow.Name, lessonRow.Grade, lessonRow.Count))
+			continue
 		}
+		usableLessons = append(usableLessons, lessonRow)
 	}
 
 	for classIndex, classRow := range classRows {
-		for _, lessonRow := range lessonsRows {
-			if lessonRow.Grade != classRow.Grade || lessonRow.Count <= 0 {
+		for _, lessonRow := range usableLessons {
+			if lessonRow.Grade != classRow.Grade {
 				continue
 			}
 
@@ -344,15 +448,15 @@ func buildPlanTasks(classRows []ClassRow, lessonsRows []LessonsRow, teachers []p
 				Continuous: lessonRow.ScheduleType,
 			}
 			for teacherIndex := range teachers {
-				if teachers[teacherIndex].FreeCount > 0 &&
-					teacherHasSubject(teachers[teacherIndex], lessonRow.Name) {
+				if teachers[teacherIndex].FreeCount > 0 && teacherHasSubject(&teachers[teacherIndex], lessonRow.Name) {
+					task.Teachers = append(task.Teachers, teacherIndex)
 				}
 			}
 			tasks = append(tasks, task)
 		}
 	}
 
-	if len(tasks) == 0 {
+	if len(tasks) == 0 && len(problems) == 0 {
 		problems = append(problems, "No lesson belongs to any existing class, so there is nothing to schedule.")
 	}
 
@@ -403,6 +507,8 @@ type subjectInfo struct {
 // subjectTotals compares what every subject needs with what its teachers can give.
 // In one period, at most "number of classes" lessons of a subject can run, and at
 // most "number of free teachers" can run, so the smaller number is the capacity.
+// (A teacher who teaches several subjects is counted for each of them here, so
+// this is an upper bound. It can prove a failure, it can never prove success.)
 func subjectTotals(tasks []planTask, teachers []planTeacher) map[string]*subjectInfo {
 	info := map[string]*subjectInfo{}
 
@@ -420,7 +526,7 @@ func subjectTotals(tasks []planTask, teachers []planTeacher) map[string]*subject
 			for p := 0; p < periodsPerDay; p++ {
 				free := 0
 				for teacherIndex := range teachers {
-					if teacherHasSubject(teachers[teacherIndex], subject.Name) && teachers[teacherIndex].Free[d][p] {
+					if teacherHasSubject(&teachers[teacherIndex], subject.Name) && teachers[teacherIndex].Free[d][p] {
 						free++
 					}
 				}
@@ -451,10 +557,20 @@ func checkPlanResources(tasks []planTask, teachers []planTeacher) []string {
 
 	for _, task := range tasks {
 		label := fmt.Sprintf("Lesson %q (grade %d)", task.LessonName, task.Grade)
-		key := fmt.Sprintf("%s|%d", task.LessonName, task.Grade)
+		key := fmt.Sprintf("%s|%d", subjectKey(task.LessonName), task.Grade)
 
 		if len(task.Teachers) == 0 {
-			addOnce(key, label+": no teacher with available periods teaches this subject.")
+			registered := 0
+			for teacherIndex := range teachers {
+				if teacherHasSubject(&teachers[teacherIndex], task.LessonName) {
+					registered++
+				}
+			}
+			if registered == 0 {
+				addOnce(key, label+": no teacher is registered for this subject.")
+			} else {
+				addOnce(key, fmt.Sprintf("%s: no teacher with available periods teaches this subject (%d registered teacher(s), none has an available period).", label, registered))
+			}
 			continue
 		}
 		if task.Count > weekPeriods {
@@ -538,7 +654,7 @@ func checkPlanResources(tasks []planTask, teachers []planTeacher) []string {
 // continuousBlocksFit tells if continuous lessons of the given lengths can all
 // be placed in one class: every lesson must stay inside one day, and a day has
 // periodsPerDay periods. Normal lessons can fill any gap, so together with the
-// "at most 20 periods per class" check this decides the class on its own,
+// "at most 24 periods per class" check this decides the class on its own,
 // without looking at teachers.
 func continuousBlocksFit(lengths []int) bool {
 	sorted := append([]int(nil), lengths...)
@@ -612,7 +728,7 @@ type planScheduler struct {
 	taskTeacher []int                                  // teacher of a task's first placed block, -1 if none yet
 	assigned    []int                                  // periods placed so far for each task
 	remaining   []int                                  // steps still to do for each task
-	lastSlot    []int                                  // slot (day*4+period) of the last placed period of a normal lesson, -1 if none
+	lastSlot    []int                                  // slot (day*periodsPerDay+period) of the last placed period of a normal lesson, -1 if none
 	dayLoad     [][daysPerWeek]int                     // periods of a task already placed on each day
 
 	totalSteps int
@@ -864,7 +980,7 @@ func (s *planScheduler) unplace(taskIndex int, option planCandidate, previousSlo
 }
 
 // ---------------------------------------------------------------------------
-// Step 5: turn a finished search into PlanRow values, or into a failure report
+// Step 4: turn a finished search into PlanRow values, or into a failure report
 // ---------------------------------------------------------------------------
 
 // toPlanRows creates one row for every slot of every class, in the same order
@@ -956,15 +1072,17 @@ func (s *planScheduler) failureReport() []string {
 // generatePlan: the whole generation, in memory only (no database access)
 // ---------------------------------------------------------------------------
 
-// generatePlan returns the timetable rows, warnings and problems.
-// If problems is not empty, no timetable is returned.
-func generatePlan(teacherRows []TeacherRow, lessonsRows []LessonsRow, classRows []ClassRow) ([]PlanRow, []string, []string) {
+// generatePlanResult runs the checks and the search and says why it failed.
+func generatePlanResult(teacherRows []TeacherRow, lessonsRows []LessonsRow, classRows []ClassRow) planResult {
 	teachers, warnings := buildPlanTeachers(teacherRows)
 	tasks, taskWarnings, problems := buildPlanTasks(classRows, lessonsRows, teachers)
 	warnings = append(warnings, taskWarnings...)
-	problems = append(problems, checkPlanResources(tasks, teachers)...)
 	if len(problems) > 0 {
-		return nil, warnings, problems
+		return planResult{Warnings: warnings, Problems: problems, Status: planInvalidData}
+	}
+
+	if proven := checkPlanResources(tasks, teachers); len(proven) > 0 {
+		return planResult{Warnings: warnings, Problems: proven, Status: planProvenImpossible}
 	}
 
 	pressure := buildPlanPressure(tasks, teachers)
@@ -974,6 +1092,8 @@ func generatePlan(teacherRows []TeacherRow, lessonsRows []LessonsRow, classRows 
 	found := best.solve(0)
 
 	// Second try (only if the first failed): teachers may change inside a lesson.
+	// Every timetable of the first try is also a timetable of the second, so the
+	// second search decides the final status.
 	if !found {
 		best = newPlanScheduler(teachers, tasks, pressure, len(classRows), false)
 		found = best.solve(0)
@@ -983,13 +1103,24 @@ func generatePlan(teacherRows []TeacherRow, lessonsRows []LessonsRow, classRows 
 	}
 
 	if !found {
-		return nil, warnings, best.failureReport()
+		status := planSearchExhausted
+		if best.limitHit {
+			status = planLimitReached
+		}
+		return planResult{Warnings: warnings, Problems: best.failureReport(), Status: status}
 	}
-	return best.toPlanRows(classRows), warnings, nil
+	return planResult{Rows: best.toPlanRows(classRows), Warnings: warnings, Status: planSucceeded}
+}
+
+// generatePlan returns the timetable rows, warnings and problems.
+// If problems is not empty, no timetable is returned.
+func generatePlan(teacherRows []TeacherRow, lessonsRows []LessonsRow, classRows []ClassRow) ([]PlanRow, []string, []string) {
+	result := generatePlanResult(teacherRows, lessonsRows, classRows)
+	return result.Rows, result.Warnings, result.Problems
 }
 
 // ---------------------------------------------------------------------------
-// Step 6: independent validation of the finished timetable
+// Step 5: independent validation of the finished timetable
 // ---------------------------------------------------------------------------
 
 type planClassKey struct {
@@ -997,7 +1128,7 @@ type planClassKey struct {
 	ClassID int
 }
 type planLessonKey struct {
-	Name  string
+	Name  string // normalized with subjectKey
 	Grade int
 }
 type planSlotKey struct {
@@ -1014,7 +1145,7 @@ type planTeacherSlotKey struct {
 type planClassLessonKey struct {
 	Grade   int
 	ClassID int
-	Name    string
+	Name    string // normalized with subjectKey
 }
 
 // validatePlan re-checks every rule using only the finished rows and the
@@ -1023,17 +1154,21 @@ func validatePlan(plans []PlanRow, teacherRows []TeacherRow, lessonsRows []Lesso
 	var problems []string
 	teachers, _ := buildPlanTeachers(teacherRows)
 
-	teacherByID := map[int]planTeacher{}
-	for _, person := range teachers {
-		teacherByID[person.ID] = person
+	teacherByID := map[int]*planTeacher{}
+	for index := range teachers {
+		teacherByID[teachers[index].ID] = &teachers[index]
 	}
 	lessonExists := map[planLessonKey]bool{}
 	for _, lessonRow := range lessonsRows {
-		lessonExists[planLessonKey{lessonRow.Name, lessonRow.Grade}] = true
+		lessonExists[planLessonKey{subjectKey(lessonRow.Name), lessonRow.Grade}] = true
 	}
 	knownClass := map[planClassKey]bool{}
 	for _, classRow := range classRows {
 		knownClass[planClassKey{classRow.Grade, classRow.Grade_id}] = true
+	}
+
+	if want := len(classRows) * daysPerWeek * periodsPerDay; len(plans) != want {
+		problems = append(problems, fmt.Sprintf("The timetable has %d rows, but %d classes x %d days x %d periods = %d rows were expected.", len(plans), len(classRows), daysPerWeek, periodsPerDay, want))
 	}
 
 	seenSlot := map[planSlotKey]bool{}
@@ -1064,7 +1199,8 @@ func validatePlan(plans []PlanRow, teacherRows []TeacherRow, lessonsRows []Lesso
 			}
 			continue
 		}
-		if !lessonExists[planLessonKey{row.LessonName, row.Grade}] {
+		lessonName := subjectKey(row.LessonName)
+		if !lessonExists[planLessonKey{lessonName, row.Grade}] {
 			problems = append(problems, fmt.Sprintf("%s: lesson %q is not defined for grade %d.", where, row.LessonName, row.Grade))
 			continue
 		}
@@ -1079,15 +1215,7 @@ func validatePlan(plans []PlanRow, teacherRows []TeacherRow, lessonsRows []Lesso
 			continue
 		}
 		if !teacherHasSubject(person, row.LessonName) {
-			problems = append(
-				problems,
-				fmt.Sprintf(
-					"%s: teacher %q does not teach %q.",
-					where,
-					person.Name,
-					row.LessonName,
-				),
-			)
+			problems = append(problems, fmt.Sprintf("%s: teacher %q does not teach %q.", where, person.Name, row.LessonName))
 		}
 		if !person.Free[row.Day][row.Hour-1] {
 			problems = append(problems, fmt.Sprintf("%s: teacher %q is not available in this period.", where, person.Name))
@@ -1098,7 +1226,7 @@ func validatePlan(plans []PlanRow, teacherRows []TeacherRow, lessonsRows []Lesso
 		}
 		teacherSlot[teacherKey] = true
 
-		key := planClassLessonKey{row.Grade, row.ClassID, row.LessonName}
+		key := planClassLessonKey{row.Grade, row.ClassID, lessonName}
 		placed[key] = append(placed[key], row)
 	}
 
@@ -1115,7 +1243,7 @@ func validatePlan(plans []PlanRow, teacherRows []TeacherRow, lessonsRows []Lesso
 			if lessonRow.Grade != classRow.Grade {
 				continue
 			}
-			rows := placed[planClassLessonKey{classRow.Grade, classRow.Grade_id, lessonRow.Name}]
+			rows := placed[planClassLessonKey{classRow.Grade, classRow.Grade_id, subjectKey(lessonRow.Name)}]
 			if len(rows) != lessonRow.Count {
 				problems = append(problems, fmt.Sprintf("Grade %d class %d, lesson %q: requires %d periods, but %d were assigned.", classRow.Grade, classRow.Grade_id, lessonRow.Name, lessonRow.Count, len(rows)))
 				continue
